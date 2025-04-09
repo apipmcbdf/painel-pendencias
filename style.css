@@ -79,6 +79,40 @@ li:hover {
   background-color: #eee;
 }
 
+li.resolvida {
+  color: green;
+}
+
+li.atrasada {
+  color: red;
+}
+
+li.vencendo-hoje {
+  font-weight: bold;
+  color: #b8860b;
+}
+
 textarea {
   resize: vertical;
+}
+
+#andamentos-list {
+  margin-top: 20px;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.andamento-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #fff;
+  border-left: 4px solid #007bff;
+  border-radius: 4px;
+}
+
+.andamento-item small {
+  display: block;
+  color: #666;
+  margin-top: 4px;
+  font-size: 0.85rem;
 }
