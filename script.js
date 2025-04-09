@@ -1,13 +1,12 @@
 // script.js
 
-// Firebase config (adicione sua config real aqui)
 const firebaseConfig = {
-  apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
-  authDomain: "painel-pendencias.firebaseapp.com",
-  projectId: "painel-pendencias",
-  storageBucket: "painel-pendencias.appspot.com",
-  messagingSenderId: "969369108934",
-  appId: "1:969369108934:web:88c5ac5a8acd987509f2c7"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_BUCKET.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -26,6 +25,9 @@ const resolvidasList = document.getElementById("resolvidas-list");
 const detalhesContainer = document.getElementById("detalhes-container");
 const salvarBtn = document.getElementById("salvar-btn");
 const salvarMsg = document.getElementById("salvar-msg");
+const novoAndamento = document.getElementById("novo-andamento");
+const enviarAndamento = document.getElementById("enviar-andamento");
+const andamentosList = document.getElementById("andamentos-list");
 
 let currentDocId = null;
 
@@ -42,23 +44,37 @@ loginBtn.addEventListener("click", async () => {
   }
 });
 
+function calcularDiasRestantes(prazo) {
+  const hoje = new Date();
+  const dataPrazo = new Date(prazo);
+  const diff = Math.ceil((dataPrazo - hoje) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
 async function carregarPendencias() {
   pendenciasList.innerHTML = "";
   resolvidasList.innerHTML = "";
   const snapshot = await db.collection("pendencias").get();
-
   const hoje = new Date();
 
   snapshot.forEach(doc => {
     const data = doc.data();
     const prazo = new Date(data.prazo);
     const status = data.status;
+    const diasRestantes = calcularDiasRestantes(data.prazo);
     const item = document.createElement("li");
-    item.textContent = data.processo;
+    item.textContent = `${data.processo} (${diasRestantes >= 0 ? 'faltam ' + diasRestantes + ' dias' : 'vencido'})`;
     item.addEventListener("click", () => carregarDetalhes(doc.id));
 
-    if (status === "resolvido" || prazo < hoje) {
+    if (status === "resolvido") {
+      item.classList.add("resolvida");
       resolvidasList.appendChild(item);
+    } else if (prazo < hoje) {
+      item.classList.add("atrasada");
+      resolvidasList.appendChild(item);
+    } else if (diasRestantes === 0) {
+      item.classList.add("vencendo-hoje");
+      pendenciasList.appendChild(item);
     } else {
       pendenciasList.appendChild(item);
     }
@@ -79,9 +95,39 @@ async function carregarDetalhes(docId) {
   document.getElementById("det-status").value = data.status || "pendente";
   document.getElementById("det-comentarios").value = data.comentarios || "";
 
+  carregarAndamentos(data.andamentos || []);
+
   detalhesContainer.classList.remove("hidden");
   salvarMsg.textContent = "";
 }
+
+function carregarAndamentos(lista) {
+  andamentosList.innerHTML = "";
+  lista.forEach(andamento => {
+    const div = document.createElement("div");
+    div.classList.add("andamento-item");
+    div.innerHTML = `
+      <p>${andamento.texto}</p>
+      <small>${andamento.autor} — ${new Date(andamento.data).toLocaleString()}</small>
+    `;
+    andamentosList.appendChild(div);
+  });
+}
+
+enviarAndamento.addEventListener("click", async () => {
+  if (!currentDocId || !novoAndamento.value.trim()) return;
+  const texto = novoAndamento.value.trim();
+  const autor = auth.currentUser.email;
+  const data = new Date().toISOString();
+
+  const docRef = db.collection("pendencias").doc(currentDocId);
+  await docRef.update({
+    andamentos: firebase.firestore.FieldValue.arrayUnion({ texto, autor, data })
+  });
+
+  novoAndamento.value = "";
+  carregarDetalhes(currentDocId);
+});
 
 salvarBtn.addEventListener("click", async () => {
   if (!currentDocId) return;
