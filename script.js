@@ -2,12 +2,12 @@
 
 // Firebase config (adicione sua config real aqui)
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_BUCKET.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID"
+  apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
+  authDomain: "painel-pendencias.firebaseapp.com",
+  projectId: "painel-pendencias",
+  storageBucket: "painel-pendencias.appspot.com",
+  messagingSenderId: "969369108934",
+  appId: "1:969369108934:web:88c5ac5a8acd987509f2c7"
 };
 
 firebase.initializeApp(firebaseConfig);
