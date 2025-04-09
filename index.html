@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -32,16 +33,24 @@
         <p><strong>Descrição:</strong> <span id="det-descricao"></span></p>
         <p><strong>Data Inicial:</strong> <span id="det-data-inicial"></span></p>
         <p><strong>Prazo Final:</strong> <span id="det-prazo"></span></p>
-        <p><strong>Status:</strong> <select id="det-status">
-          <option value="pendente">Pendente</option>
-          <option value="em_andamento">Em andamento</option>
-          <option value="resolvido">Resolvido</option>
-          <option value="atrasado">Atrasado</option>
-        </select></p>
+        <p><strong>Status:</strong> 
+          <select id="det-status">
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="resolvido">Resolvido</option>
+            <option value="atrasado">Atrasado</option>
+          </select>
+        </p>
         <p><strong>Comentários:</strong></p>
         <textarea id="det-comentarios" rows="4"></textarea>
         <button id="salvar-btn">Salvar</button>
         <p id="salvar-msg" class="success"></p>
+
+        <hr>
+        <h4>Adicionar Andamento</h4>
+        <textarea id="novo-andamento" placeholder="Descreva o andamento..." rows="3"></textarea>
+        <button id="enviar-andamento">Enviar andamento</button>
+        <div id="andamentos-list"></div>
       </div>
     </div>
 
