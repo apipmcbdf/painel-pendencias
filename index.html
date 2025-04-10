@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -29,28 +28,57 @@
     <div id="center-column">
       <h3>Detalhes da Pendência</h3>
       <div id="detalhes-container" class="hidden">
-        <p><strong>Processo:</strong> <span id="det-processo"></span></p>
-        <p><strong>Descrição:</strong> <span id="det-descricao"></span></p>
-        <p><strong>Data Inicial:</strong> <span id="det-data-inicial"></span></p>
-        <p><strong>Prazo Final:</strong> <span id="det-prazo"></span></p>
-        <p><strong>Status:</strong> 
-          <select id="det-status">
-            <option value="pendente">Pendente</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="resolvido">Resolvido</option>
-            <option value="atrasado">Atrasado</option>
-          </select>
-        </p>
-        <p><strong>Comentários:</strong></p>
-        <textarea id="det-comentarios" rows="4"></textarea>
-        <button id="salvar-btn">Salvar</button>
-        <p id="salvar-msg" class="success"></p>
+
+        <div class="edit-group">
+          <p><strong>Processo:</strong> 
+            <span id="det-processo-text"></span>
+            <input id="det-processo" class="hidden" />
+            <button class="editar" data-alvo="det-processo">✎ Editar</button>
+          </p>
+
+          <p><strong>Descrição:</strong> 
+            <span id="det-descricao-text"></span>
+            <textarea id="det-descricao" class="hidden" rows="2"></textarea>
+            <button class="editar" data-alvo="det-descricao">✎ Editar</button>
+          </p>
+
+          <p><strong>Data Inicial:</strong> 
+            <span id="det-data-inicial-text"></span>
+            <input type="date" id="det-data-inicial" class="hidden" />
+            <button class="editar" data-alvo="det-data-inicial">✎ Editar</button>
+          </p>
+
+          <p><strong>Prazo Final:</strong> 
+            <span id="det-prazo-text"></span>
+            <input type="date" id="det-prazo" class="hidden" />
+            <button class="editar" data-alvo="det-prazo">✎ Editar</button>
+          </p>
+
+          <p><strong>Status:</strong> 
+            <select id="det-status">
+              <option value="pendente">Pendente</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="resolvido">Resolvido</option>
+              <option value="atrasado">Atrasado</option>
+            </select>
+          </p>
+
+          <p><strong>Comentários:</strong>
+            <span id="det-comentarios-text"></span>
+            <textarea id="det-comentarios" class="hidden" rows="3"></textarea>
+            <button class="editar" data-alvo="det-comentarios">✎ Editar</button>
+          </p>
+
+          <button id="salvar-btn">Salvar todas as alterações</button>
+          <p id="salvar-msg" class="success"></p>
+        </div>
 
         <hr>
         <h4>Adicionar Andamento</h4>
         <textarea id="novo-andamento" placeholder="Descreva o andamento..." rows="3"></textarea>
         <button id="enviar-andamento">Enviar andamento</button>
         <div id="andamentos-list"></div>
+
       </div>
     </div>
 
