@@ -1,12 +1,12 @@
 // script.js
 
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_BUCKET.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID"
+  apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
+  authDomain: "painel-pendencias.firebaseapp.com",
+  projectId: "painel-pendencias",
+  storageBucket: "painel-pendencias.firebasestorage.app",
+  messagingSenderId: "969369108934",
+  appId: "1:969369108934:web:88c5ac5a8acd987509f2c7"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -95,6 +95,7 @@ async function carregarDetalhes(docId) {
   document.getElementById("det-status").value = data.status || "pendente";
   document.getElementById("det-comentarios").value = data.comentarios || "";
 
+  novoAndamento.value = "";
   carregarAndamentos(data.andamentos || []);
 
   detalhesContainer.classList.remove("hidden");
@@ -121,9 +122,13 @@ enviarAndamento.addEventListener("click", async () => {
   const data = new Date().toISOString();
 
   const docRef = db.collection("pendencias").doc(currentDocId);
-  await docRef.update({
-    andamentos: firebase.firestore.FieldValue.arrayUnion({ texto, autor, data })
-  });
+  const doc = await docRef.get();
+  const dados = doc.data();
+
+  const novoArray = dados.andamentos || [];
+  novoArray.push({ texto, autor, data });
+
+  await docRef.update({ andamentos: novoArray });
 
   novoAndamento.value = "";
   carregarDetalhes(currentDocId);
