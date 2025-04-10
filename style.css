@@ -6,7 +6,7 @@ body {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* Painel principal */
@@ -21,6 +21,7 @@ body {
   gap: 20px;
 }
 
+/* Colunas */
 #left-column, #center-column, #right-column {
   background-color: #fdfdfd;
   padding: 20px;
@@ -35,6 +36,18 @@ body {
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
 }
 
+/* Estilização da Coluna da Direita (Detalhes da Parte) */
+#right-column {
+  background-color: #fff;
+}
+#right-column h3 {
+  text-align: center;
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px;
+  border-radius: 6px;
+}
+
 /* Listas e itens */
 ul {
   list-style: none;
@@ -46,23 +59,16 @@ li {
   padding: 10px;
   border-bottom: 1px solid #ccc;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 li:hover {
   background-color: #eef5ff;
 }
 
-li.resolvida {
+/* Classe para pendência resolvida */
+li.resolvido {
   color: green;
-}
-
-li.atrasada {
-  color: red;
-}
-
-li.vencendo-hoje {
-  font-weight: bold;
-  color: #b8860b;
 }
 
 /* Inputs, selects, textarea e botões */
@@ -86,6 +92,7 @@ button {
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 button:hover {
@@ -124,7 +131,7 @@ button:hover {
   font-size: 0.85rem;
 }
 
-/* Botão de edição minimalista (mantém somente para comentários) */
+/* Botão de edição minimalista */
 .editar {
   background: none;
   border: none;
@@ -143,70 +150,7 @@ button:hover {
   margin-bottom: 15px;
 }
 
-input:not(.hidden),
-textarea:not(.hidden),
-select:not(.hidden) {
-  background-color: #fff9dd;
-}
-
-/* LOGIN */
-#login-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(to right, #007bff, #00c6ff);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-#login-screen > div {
-  background-color: white;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 360px;
-  text-align: center;
-}
-
-#login-screen h2 {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-#login-screen input {
-  width: 100%;
-  margin: 10px 0;
-  padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-#login-screen button {
-  width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  margin-top: 10px;
-}
-
-#login-screen button:hover {
-  background-color: #0056b3;
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* Estilos novos para o Accordion e para as partes */
+/* Estilos para o Accordion e grupos de pendências */
 .grupo-descricao {
   margin-bottom: 20px;
   border: 1px solid #ddd;
@@ -222,12 +166,12 @@ select:not(.hidden) {
   color: #fff;
   padding: 5px;
   cursor: pointer;
+  border-radius: 4px;
 }
 
-.parte-details {
+/* Detalhes da Parte (coluna da direita) */
+#parte-details-display {
   margin-top: 10px;
   padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #f9f9f9;
+  border-top: 1px solid #ccc;
 }
