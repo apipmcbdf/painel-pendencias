@@ -14,6 +14,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let currentDocId = null;
+const originalValues = {};
 
 const loginBtn = document.getElementById("login-btn");
 const emailInput = document.getElementById("email");
@@ -86,16 +87,20 @@ async function carregarDetalhes(docId) {
   if (!doc.exists) return;
   const data = doc.data();
   currentDocId = docId;
+  salvarMsg.textContent = "";
+  detalhesContainer.classList.remove("hidden");
 
+  // Processo
   document.getElementById("det-processo-text").textContent = data.processo;
   document.getElementById("det-processo").value = data.processo;
+  originalValues["det-processo"] = data.processo;
 
+  // Partes
   const partesList = document.getElementById("det-partes-list");
   const partesTextarea = document.getElementById("det-partes");
   const partesText = document.getElementById("det-partes-text");
   partesList.innerHTML = "";
   partesText.textContent = "";
-
   if (Array.isArray(data.partes)) {
     data.partes.forEach(parte => {
       const li = document.createElement("li");
@@ -104,24 +109,32 @@ async function carregarDetalhes(docId) {
     });
     partesTextarea.value = data.partes.join("; ");
     partesText.textContent = data.partes.join("; ");
+    originalValues["det-partes"] = partesTextarea.value;
   }
 
+  // Descrição
   document.getElementById("det-descricao-text").textContent = data.descricao;
   document.getElementById("det-descricao").value = data.descricao;
+  originalValues["det-descricao"] = data.descricao;
 
+  // Data Inicial
   document.getElementById("det-data-inicial-text").textContent = data.data_inicial;
   document.getElementById("det-data-inicial").value = data.data_inicial;
+  originalValues["det-data-inicial"] = data.data_inicial;
 
+  // Prazo
   document.getElementById("det-prazo-text").textContent = data.prazo;
   document.getElementById("det-prazo").value = data.prazo;
+  originalValues["det-prazo"] = data.prazo;
 
+  // Status
   document.getElementById("det-status").value = data.status || "pendente";
+  originalValues["det-status"] = data.status || "pendente";
 
+  // Comentários
   document.getElementById("det-comentarios-text").textContent = data.comentarios;
   document.getElementById("det-comentarios").value = data.comentarios || "";
-
-  detalhesContainer.classList.remove("hidden");
-  salvarMsg.textContent = "";
+  originalValues["det-comentarios"] = data.comentarios || "";
 
   carregarAndamentos(data.andamentos || []);
 }
@@ -139,14 +152,29 @@ function carregarAndamentos(lista) {
   });
 }
 
+// Alternar entre edição e visualização com cancelamento
 document.querySelectorAll(".editar").forEach(botao => {
   botao.addEventListener("click", () => {
     const id = botao.dataset.alvo;
-    const text = document.getElementById(`${id}-text`);
+    const span = document.getElementById(`${id}-text`);
     const input = document.getElementById(id);
-    if (text) text.classList.add("hidden");
-    input.classList.remove("hidden");
-    input.focus();
+
+    if (!input || !span) return;
+
+    if (input.classList.contains("hidden")) {
+      // Abrindo para edição
+      input.classList.remove("hidden");
+      span.classList.add("hidden");
+    } else {
+      // Cancelando edição, restaurar valor
+      input.classList.add("hidden");
+      span.classList.remove("hidden");
+      if (input.tagName === "TEXTAREA" || input.tagName === "INPUT") {
+        input.value = originalValues[id];
+      } else if (input.tagName === "SELECT") {
+        input.value = originalValues[id];
+      }
+    }
   });
 });
 
