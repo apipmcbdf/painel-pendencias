@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script defer src="script.js"></script>
 </head>
 <body>
   <div id="login-screen">
@@ -34,7 +33,6 @@
           <p><strong>Processo:</strong> 
             <span id="det-processo-text"></span>
           </p>
-
           <p><strong>Partes:</strong></p>
           <ul id="det-partes-list"></ul>
 
@@ -84,5 +82,8 @@
       <ul id="resolvidas-list"></ul>
     </div>
   </div>
+
+  <!-- ✅ Script movido para o final -->
+  <script src="script.js"></script>
 </body>
 </html>
