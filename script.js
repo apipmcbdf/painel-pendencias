@@ -17,7 +17,11 @@ let currentDocId = null;
 const originalValues = {};
 
 const nomesPorEmail = {
-  "advogada1@teste.com": "Mario Encanador"
+  "advogada1@teste.com": "Mario Encanador";
+  "yasmim.ribeiro@apipmcbdf.com.br": "Yasmim";
+  "grazielasuelimenini2@gmail.com": "Graziela";
+  "marcelledias.adv@gmail.com": "Marcelle";
+  "cavictor.franco@gmail.com": "Victor"
 };
 
 const loginBtn = document.getElementById("login-btn");
