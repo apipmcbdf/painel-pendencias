@@ -92,7 +92,10 @@ async function carregarDetalhes(docId) {
 
   const partesList = document.getElementById("det-partes-list");
   const partesTextarea = document.getElementById("det-partes");
+  const partesText = document.getElementById("det-partes-text");
   partesList.innerHTML = "";
+  partesText.textContent = "";
+
   if (Array.isArray(data.partes)) {
     data.partes.forEach(parte => {
       const li = document.createElement("li");
@@ -100,6 +103,7 @@ async function carregarDetalhes(docId) {
       partesList.appendChild(li);
     });
     partesTextarea.value = data.partes.join("; ");
+    partesText.textContent = data.partes.join("; ");
   }
 
   document.getElementById("det-descricao-text").textContent = data.descricao;
