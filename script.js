@@ -66,8 +66,7 @@ function calcularDiasRestantes(prazo) {
   return diff;
 }
 
-// CARREGAR AS PENDÊNCIAS AGRUPADAS POR DESCRIÇÃO (accordion)
-// Agora todos os itens (incluindo resolvidos) são exibidos na coluna da esquerda com formatação diferenciada
+// CARREGAR PENDÊNCIAS AGRUPADAS POR DESCRIÇÃO (accordion)
 async function carregarPendencias() {
   pendenciasList.innerHTML = "";
   
@@ -83,7 +82,7 @@ async function carregarPendencias() {
     grupos[descricao].push({ id: doc.id, data });
   });
 
-  // Construir cada grupo (accordion) – os itens iniciam recolhidos
+  // Construir cada grupo – os itens iniciam recolhidos
   for (const descricao in grupos) {
     const grupoContainer = document.createElement("div");
     grupoContainer.className = "grupo-descricao";
@@ -91,7 +90,6 @@ async function carregarPendencias() {
     const header = document.createElement("h4");
     header.textContent = descricao;
     header.addEventListener("click", () => {
-      // Toggle da lista: inicia recolhida
       const ul = grupoContainer.querySelector("ul");
       ul.style.display = (ul.style.display === "none" ? "block" : "none");
     });
@@ -102,17 +100,20 @@ async function carregarPendencias() {
     grupos[descricao].forEach(item => {
       const { data } = item;
       const li = document.createElement("li");
-      
-      // Se o status for "resolvido", mostra o processo em verde e com a tag (Resolvido)
+      // Se o processo está resolvido, exibe em verde
       if (data.status === "resolvido") {
         li.textContent = `${data.processo} (Resolvido)`;
         li.style.color = "green";
       } else {
         const diasRestantes = calcularDiasRestantes(data.prazo);
         let info = `${data.processo} `;
-        if (diasRestantes >= 0) info += `(${'faltam ' + diasRestantes + ' dias'})`;
+        if (diasRestantes >= 0) info += `(faltam ${diasRestantes} dias)`;
         else info += `(vencido)`;
         li.textContent = info;
+        // Se já passou do prazo ou faltam menos de 7 dias, exibe em vermelho
+        if (diasRestantes < 7) {
+          li.style.color = "red";
+        }
       }
       li.addEventListener("click", () => carregarDetalhes(item.id));
       ul.appendChild(li);
@@ -136,7 +137,7 @@ async function carregarDetalhes(docId) {
   document.getElementById("det-data-inicial-text").textContent = new Date(data.data_inicial).toISOString().split("T")[0];
   document.getElementById("det-prazo-text").textContent = new Date(data.prazo).toISOString().split("T")[0];
 
-  // Atualiza o status e comentários
+  // Atualiza status e comentários
   document.getElementById("det-status").value = data.status || "pendente";
   originalValues["det-status"] = data.status || "pendente";
 
@@ -144,24 +145,20 @@ async function carregarDetalhes(docId) {
   document.getElementById("det-comentarios").value = data.comentarios || "";
   originalValues["det-comentarios"] = data.comentarios || "";
 
-  // Carrega os andamentos
   carregarAndamentos(data.andamentos || []);
 
-  // Carrega as informações das partes
+  // Carregar as partes
   const partesList = document.getElementById("det-partes-list");
   partesList.innerHTML = "";
   if (Array.isArray(data.partes)) {
     data.partes.forEach((parte, index) => {
       const li = document.createElement("li");
-      // Exibe o nome da parte
       const nome = (typeof parte === "object") ? parte.nome : parte;
       li.innerHTML = `<span class="parte-name">${nome}</span>`;
       
-      // Cria um container com os detalhes da parte
+      // Container com os detalhes da parte
       const detailsDiv = document.createElement("div");
-      detailsDiv.classList.add("parte-details");
-      // Inicialmente o container ficará oculto, mas agora ele será exibido na coluna da direita
-      detailsDiv.classList.add("hidden");
+      detailsDiv.classList.add("parte-details", "hidden");
       detailsDiv.innerHTML = `
         <label>Telefone: <input type="text" class="parte-telefone" value="${(parte.telefone) || ''}" data-index="${index}" /></label>
         <label>Email: <input type="text" class="parte-email" value="${(parte.email) || ''}" data-index="${index}" /></label>
@@ -188,19 +185,23 @@ async function carregarDetalhes(docId) {
         </label>
         <button class="parte-salvar" data-index="${index}">Salvar Parte</button>
       `;
-      // Ao clicar no nome da parte, exibe os detalhes na coluna da direita
+      // Ao clicar no nome da parte, exibe seus detalhes na coluna direita
       li.querySelector(".parte-name").addEventListener("click", () => {
-        const parteDetailsDisplay = document.getElementById("parte-details-display");
-        // Exibe os detalhes da parte selecionada
-        parteDetailsDisplay.innerHTML = "";
+        const parteDetailsContainer = document.getElementById("parte-details-container");
+        parteDetailsContainer.innerHTML = "";
+        // Cria cabeçalho com o nome da parte
+        const header = document.createElement("h3");
+        header.textContent = `Detalhes da Parte - ${nome}`;
+        parteDetailsContainer.appendChild(header);
         detailsDiv.classList.remove("hidden");
-        parteDetailsDisplay.appendChild(detailsDiv);
+        parteDetailsContainer.appendChild(detailsDiv);
+        parteDetailsContainer.classList.remove("hidden");
       });
       li.appendChild(detailsDiv);
       partesList.appendChild(li);
     });
 
-    // Adiciona os event listeners para tratamento dos selects e botões das partes
+    // Tratamento dos selects e dos botões dentro dos detalhes das partes
     document.querySelectorAll(".parte-status").forEach(select => {
       select.addEventListener("change", (e) => {
         const li = e.target.closest("li");
@@ -224,7 +225,7 @@ async function carregarDetalhes(docId) {
         const herdeiros = li.querySelector(".parte-herdeiros-input").value;
         const assinou = li.querySelector(".parte-assinou").value;
 
-        // Atualiza a parte no documento do Firebase
+        // Atualiza a parte no documento Firebase
         const docRef = db.collection("pendencias").doc(currentDocId);
         const docSnap = await docRef.get();
         let partes = docSnap.data().partes;
@@ -258,7 +259,7 @@ function carregarAndamentos(lista) {
   });
 }
 
-// Apenas mantém o edit para os comentários (não para a descrição)
+// Edição dos comentários na pendência (mantém o mesmo fluxo)
 document.querySelectorAll(".editar").forEach(botao => {
   if (botao.dataset.alvo === "det-descricao") return;
   botao.addEventListener("click", () => {
