@@ -149,3 +149,54 @@ textarea:not(.hidden),
 select:not(.hidden) {
   background-color: #fff9dd;
 }
+#login-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to right, #007bff, #00c6ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#login-screen > div {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+#login-screen h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+#login-screen input {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+#login-screen button {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+#login-screen button:hover {
+  background-color: #0056b3;
+}
