@@ -1,89 +1,45 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Pendências</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  <div id="login-screen">
-    <div>
-      <h2>Login</h2>
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Senha" />
-      <button id="login-btn">Entrar</button>
-      <p id="login-error" class="error"></p>
-    </div>
+  <div id="login-container" class="centralizado">
+    <!-- Login aqui -->
   </div>
-
   <div id="main-panel" class="hidden">
-    <div id="left-column">
-      <h3>Pendências</h3>
-      <ul id="pendencias-list"></ul>
+    <div id="pendencias">
+      <!-- Agrupamento por descrição será preenchido via JS -->
     </div>
 
-    <div id="center-column">
+    <div id="detalhes-pendencia">
       <h2>Detalhes da Pendência</h2>
-      <div id="detalhes-container" class="hidden">
-        <div class="edit-group">
-          <p><strong>Processo:</strong> 
-            <span id="det-processo-text"></span>
-          </p>
-          <p><strong>Partes:</strong></p>
-          <ul id="det-partes-list"></ul>
+      <p><strong>Processo:</strong> <span id="processo"></span></p>
 
-          <p><strong>Descrição:</strong> 
-            <span id="det-descricao-text"></span>
-            <textarea id="det-descricao" class="hidden" rows="2"></textarea>
-            <button class="editar" data-alvo="det-descricao">✎</button>
-          </p>
-
-          <p><strong>Data Inicial:</strong> 
-            <span id="det-data-inicial-text"></span>
-          </p>
-
-          <p><strong>Prazo Final:</strong> 
-            <span id="det-prazo-text"></span>
-          </p>
-
-          <p><strong>Status:</strong> 
-            <select id="det-status">
-              <option value="pendente">Pendente</option>
-              <option value="em_andamento">Em andamento</option>
-              <option value="resolvido">Resolvido</option>
-              <option value="atrasado">Atrasado</option>
-            </select>
-          </p>
-
-          <p><strong>Comentários:</strong>
-            <span id="det-comentarios-text"></span>
-            <textarea id="det-comentarios" class="hidden" rows="3"></textarea>
-            <button class="editar" data-alvo="det-comentarios">✎</button>
-          </p>
-
-          <button id="salvar-btn">Salvar todas as alterações</button>
-          <p id="salvar-msg" class="success"></p>
-        </div>
-
-        <hr>
-        <h4>Adicionar Andamento</h4>
-        <textarea id="novo-andamento" placeholder="Descreva o andamento..." rows="3"></textarea>
-        <button id="enviar-andamento">Enviar andamento</button>
-        <div id="andamentos-list"></div>
+      <div>
+        <strong>Partes:</strong>
+        <ul id="lista-partes"></ul>
       </div>
+
+      <p><strong>Descrição:</strong> <span id="descricao"></span></p>
+      <p><strong>Data Inicial:</strong> <span id="data-inicial"></span></p>
+      <p><strong>Prazo Final:</strong> <span id="prazo-final"></span></p>
+
+      <div>
+        <label for="comentarios">Comentários:</label>
+        <textarea id="comentarios"></textarea>
+      </div>
+
+      <button id="salvar-alteracoes">Salvar todas as alterações</button>
     </div>
 
-    <div id="right-column">
-      <h3>Resolvidas / Fora do Prazo</h3>
-      <ul id="resolvidas-list"></ul>
+    <div id="andamentos">
+      <!-- Lista de andamentos -->
     </div>
   </div>
-
-  <!-- ✅ Script movido para o final -->
-  <script src="script.js"></script>
 </body>
 </html>
