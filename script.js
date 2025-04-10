@@ -1,5 +1,16 @@
-console.log("✅ Script carregado");
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
+// 🔐 Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
   authDomain: "painel-pendencias.firebaseapp.com",
@@ -9,193 +20,156 @@ const firebaseConfig = {
   appId: "1:969369108934:web:88c5ac5a8acd987509f2c7"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-let currentDocId = null;
-const originalValues = {};
+// Elementos da interface
+const loginContainer = document.getElementById("login-container");
+const painel = document.getElementById("main-panel");
+const pendenciasContainer = document.getElementById("pendencias");
+const listaPartes = document.getElementById("lista-partes");
+const descricaoEl = document.getElementById("descricao");
+const processoEl = document.getElementById("processo");
+const dataInicialEl = document.getElementById("data-inicial");
+const prazoFinalEl = document.getElementById("prazo-final");
+const comentariosEl = document.getElementById("comentarios");
 
-const nomesPorEmail = {
-  "advogada1@teste.com": "Mario Encanador"
-};
+// Carrega os detalhes da pendência ao centro
+function carregarPendencia(pendencia) {
+  processoEl.textContent = pendencia.processo;
+  descricaoEl.textContent = pendencia.descricao;
+  dataInicialEl.textContent = pendencia.dataInicial.split(" ")[0];
+  prazoFinalEl.textContent = pendencia.prazoFinal.split(" ")[0];
+  comentariosEl.value = pendencia.comentarios || "";
 
-const loginBtn = document.getElementById("login-btn");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const loginScreen = document.getElementById("login-screen");
-const mainPanel = document.getElementById("main-panel");
-const loginError = document.getElementById("login-error");
-
-const pendenciasList = document.getElementById("pendencias-list");
-const resolvidasList = document.getElementById("resolvidas-list");
-const detalhesContainer = document.getElementById("detalhes-container");
-const salvarBtn = document.getElementById("salvar-btn");
-const salvarMsg = document.getElementById("salvar-msg");
-
-const novoAndamento = document.getElementById("novo-andamento");
-const enviarAndamento = document.getElementById("enviar-andamento");
-const andamentosList = document.getElementById("andamentos-list");
-
-loginBtn.addEventListener("click", async () => {
-  console.log("🔐 Botão de login clicado");
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if (!email || !password) {
-    loginError.textContent = "Preencha todos os campos.";
-    return;
-  }
-
-  try {
-    const result = await auth.signInWithEmailAndPassword(email, password);
-    console.log("✅ Login bem-sucedido:", result.user.email);
-    loginScreen.classList.add("hidden");
-    mainPanel.classList.remove("hidden");
-    carregarPendencias();
-  } catch (err) {
-    console.error("❌ Erro ao fazer login:", err.message);
-    loginError.textContent = "Usuário ou senha inválidos.";
-  }
-});
-
-function calcularDiasRestantes(prazo) {
-  const hoje = new Date();
-  const dataPrazo = new Date(prazo);
-  const diff = Math.ceil((dataPrazo - hoje) / (1000 * 60 * 60 * 24));
-  return diff;
-}
-
-async function carregarPendencias() {
-  pendenciasList.innerHTML = "";
-  resolvidasList.innerHTML = "";
-  const snapshot = await db.collection("pendencias").get();
-  const hoje = new Date();
-
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const prazo = new Date(data.prazo);
-    const diasRestantes = calcularDiasRestantes(data.prazo);
-    const item = document.createElement("li");
-    item.textContent = `${data.processo} (${diasRestantes >= 0 ? 'faltam ' + diasRestantes + ' dias' : 'vencido'})`;
-    item.addEventListener("click", () => carregarDetalhes(doc.id));
-
-    if (data.status === "resolvido") {
-      item.classList.add("resolvida");
-      resolvidasList.appendChild(item);
-    } else if (prazo < hoje) {
-      item.classList.add("atrasada");
-      resolvidasList.appendChild(item);
-    } else if (diasRestantes === 0) {
-      item.classList.add("vencendo-hoje");
-      pendenciasList.appendChild(item);
-    } else {
-      pendenciasList.appendChild(item);
-    }
-  });
-}
-
-async function carregarDetalhes(docId) {
-  const doc = await db.collection("pendencias").doc(docId).get();
-  if (!doc.exists) return;
-  const data = doc.data();
-  currentDocId = docId;
-  salvarMsg.textContent = "";
-  detalhesContainer.classList.remove("hidden");
-
-  document.getElementById("det-processo-text").textContent = data.processo;
-
-  const partesList = document.getElementById("det-partes-list");
-  partesList.innerHTML = "";
-  if (Array.isArray(data.partes)) {
-    data.partes.forEach(parte => {
-      const li = document.createElement("li");
-      li.textContent = parte;
-      partesList.appendChild(li);
-    });
-  }
-
-  document.getElementById("det-descricao-text").textContent = data.descricao;
-  document.getElementById("det-descricao").value = data.descricao;
-  originalValues["det-descricao"] = data.descricao;
-
-  document.getElementById("det-data-inicial-text").textContent = data.data_inicial;
-  document.getElementById("det-prazo-text").textContent = data.prazo;
-
-  document.getElementById("det-status").value = data.status || "pendente";
-  originalValues["det-status"] = data.status || "pendente";
-
-  document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
-  document.getElementById("det-comentarios").value = data.comentarios || "";
-  originalValues["det-comentarios"] = data.comentarios || "";
-
-  carregarAndamentos(data.andamentos || []);
-}
-
-function carregarAndamentos(lista) {
-  andamentosList.innerHTML = "";
-  lista.forEach(and => {
-    const div = document.createElement("div");
-    div.className = "andamento-item";
-    div.innerHTML = `
-      <p>${and.texto}</p>
-      <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
+  listaPartes.innerHTML = "";
+  pendencia.partes.forEach(parte => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <button class="parte-nome">${parte.nome}</button>
+      <div class="detalhes-parte hidden">
+        <label>Telefone: <input type="text" value="${parte.telefone || ''}" /></label><br />
+        <label>Email: <input type="email" value="${parte.email || ''}" /></label><br />
+        <label>Contato:
+          <select>
+            <option ${parte.contato === 'Sim' ? 'selected' : ''}>Sim</option>
+            <option ${parte.contato === 'Não' ? 'selected' : ''}>Não</option>
+          </select>
+        </label><br />
+        <label>Status:
+          <select class="status-parte">
+            <option ${parte.status === 'Vivo' ? 'selected' : ''}>Vivo</option>
+            <option ${parte.status === 'Falecido' ? 'selected' : ''}>Falecido</option>
+          </select>
+        </label><br />
+        <div class="herdeiros hidden">
+          <label>Herdeiros: <textarea>${parte.herdeiros || ''}</textarea></label>
+        </div>
+        <label>Assinou o Acordo?
+          <select>
+            <option ${parte.assinou === 'Sim' ? 'selected' : ''}>Sim</option>
+            <option ${parte.assinou === 'Não' ? 'selected' : ''}>Não</option>
+          </select>
+        </label>
+      </div>
     `;
-    andamentosList.appendChild(div);
+    listaPartes.appendChild(li);
   });
 }
 
-document.querySelectorAll(".editar").forEach(botao => {
-  botao.addEventListener("click", () => {
-    const id = botao.dataset.alvo;
-    const span = document.getElementById(`${id}-text`);
-    const input = document.getElementById(id);
+// Mostra/esconde detalhes ao clicar no nome da parte
+listaPartes.addEventListener("click", e => {
+  if (e.target.classList.contains("parte-nome")) {
+    const detalhes = e.target.nextElementSibling;
+    detalhes.classList.toggle("hidden");
+  }
+});
 
-    if (!input || !span) return;
+// Mostra campo de herdeiros se status for Falecido
+listaPartes.addEventListener("change", e => {
+  if (e.target.classList.contains("status-parte")) {
+    const status = e.target.value;
+    const herdeirosDiv = e.target.closest(".detalhes-parte").querySelector(".herdeiros");
+    herdeirosDiv.classList.toggle("hidden", status !== "Falecido");
+  }
+});
 
-    if (input.classList.contains("hidden")) {
-      input.classList.remove("hidden");
-      span.classList.add("hidden");
-    } else {
-      input.classList.add("hidden");
-      span.classList.remove("hidden");
-      input.value = originalValues[id];
-    }
+// Agrupa pendências por descrição
+function agruparPorDescricao(lista) {
+  const grupos = {};
+  lista.forEach(pendencia => {
+    const desc = pendencia.descricao.toUpperCase();
+    if (!grupos[desc]) grupos[desc] = [];
+    grupos[desc].push(pendencia);
   });
+  return grupos;
+}
+
+// Renderiza painel da esquerda agrupado
+function renderizarPendenciasAgrupadas(pendencias) {
+  const grupos = agruparPorDescricao(pendencias);
+  pendenciasContainer.innerHTML = "";
+
+  Object.entries(grupos).forEach(([descricao, processos]) => {
+    const grupoDiv = document.createElement("div");
+    const titulo = document.createElement("h3");
+    titulo.textContent = descricao;
+    titulo.classList.add("grupo-descricao");
+
+    const lista = document.createElement("ul");
+    lista.classList.add("lista-processos");
+
+    processos.forEach(p => {
+      const item = document.createElement("li");
+      item.classList.add("item-processo");
+      item.textContent = `${p.processo} (${p.prazoFinal.split(" ")[0]})`;
+      item.addEventListener("click", () => carregarPendencia(p));
+      lista.appendChild(item);
+    });
+
+    grupoDiv.appendChild(titulo);
+    grupoDiv.appendChild(lista);
+    pendenciasContainer.appendChild(grupoDiv);
+  });
+}
+
+// Carrega dados do Firebase
+async function carregarPendenciasDoFirebase() {
+  const snapshot = await getDocs(collection(db, "pendencias"));
+  const pendencias = snapshot.docs.map(doc => doc.data());
+  renderizarPendenciasAgrupadas(pendencias);
+  if (pendencias.length > 0) carregarPendencia(pendencias[0]);
+}
+
+// Autenticação com Firebase
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loginContainer.classList.add("hidden");
+    painel.classList.remove("hidden");
+    carregarPendenciasDoFirebase();
+  } else {
+    loginContainer.classList.remove("hidden");
+    painel.classList.add("hidden");
+  }
 });
 
-salvarBtn.addEventListener("click", async () => {
-  if (!currentDocId) return;
+// Login
+document.getElementById("login-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-  const dados = {
-    descricao: document.getElementById("det-descricao").value.trim(),
-    status: document.getElementById("det-status").value,
-    comentarios: document.getElementById("det-comentarios").value.trim()
-  };
-
-  await db.collection("pendencias").doc(currentDocId).update(dados);
-  salvarMsg.textContent = "Atualizado com sucesso!";
-  carregarPendencias();
-  carregarDetalhes(currentDocId);
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      console.log("Login realizado com sucesso!");
+    })
+    .catch((error) => {
+      alert("Erro no login: " + error.message);
+    });
 });
 
-enviarAndamento.addEventListener("click", async () => {
-  if (!currentDocId || !novoAndamento.value.trim()) return;
-
-  const texto = novoAndamento.value.trim();
-  const email = auth.currentUser.email;
-  const autor = nomesPorEmail[email] || email;
-  const data = new Date().toISOString();
-
-  const docRef = db.collection("pendencias").doc(currentDocId);
-  const doc = await docRef.get();
-  const dados = doc.data();
-
-  const novoArray = dados.andamentos || [];
-  novoArray.push({ texto, autor, data });
-
-  await docRef.update({ andamentos: novoArray });
-
-  novoAndamento.value = "";
-  carregarDetalhes(currentDocId);
+// Botão salvar
+document.getElementById("salvar-alteracoes").addEventListener("click", () => {
+  alert("Alterações salvas (mock). Salvar no Firestore ainda será implementado.");
 });
