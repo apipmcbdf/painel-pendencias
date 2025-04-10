@@ -116,3 +116,35 @@ textarea {
   margin-top: 4px;
   font-size: 0.85rem;
 }
+
+/* NOVOS ESTILOS PARA CAMPOS EDITÁVEIS */
+
+.editar {
+  background: none;
+  border: none;
+  color: #007bff;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.editar:hover {
+  text-decoration: underline;
+}
+
+.edit-group p {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+input:not(.hidden),
+textarea:not(.hidden),
+select:not(.hidden) {
+  border: 1px solid #aaa;
+  background-color: #fffdd0; /* amarelo claro para indicar edição */
+  padding: 6px;
+  margin-top: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
