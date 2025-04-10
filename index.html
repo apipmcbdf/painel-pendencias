@@ -21,12 +21,14 @@
   </div>
 
   <div id="main-panel" class="hidden">
+    <!-- Coluna Esquerda: Pendências -->
     <div id="left-column">
       <h3>Pendências</h3>
-      <!-- As pendências agora serão agrupadas por descrição -->
+      <!-- Os grupos serão gerados aqui (accordion), iniciando recolhidos -->
       <div id="pendencias-list"></div>
     </div>
 
+    <!-- Coluna Central: Detalhes da Pendência -->
     <div id="center-column">
       <h2>Detalhes da Pendência</h2>
       <div id="detalhes-container" class="hidden">
@@ -35,10 +37,10 @@
             <span id="det-processo-text"></span>
           </p>
           <p><strong>Partes:</strong></p>
-          <!-- Cada item da lista de partes será clicável para expandir os detalhes -->
+          <!-- Lista dos nomes das partes -->
           <ul id="det-partes-list"></ul>
 
-          <!-- DESCRIÇÃO NÃO MAIS EDITÁVEL: removidos textarea e botão de edição -->
+          <!-- DESCRIÇÃO NÃO MAIS EDITÁVEL -->
           <p><strong>Descrição:</strong> 
             <span id="det-descricao-text"></span>
           </p>
@@ -78,13 +80,17 @@
       </div>
     </div>
 
+    <!-- Coluna Direita: Detalhes da Parte selecionada -->
     <div id="right-column">
-      <h3>Resolvidas / Fora do Prazo</h3>
-      <ul id="resolvidas-list"></ul>
+      <h3>Detalhes da Parte</h3>
+      <div id="parte-details-display">
+        <!-- Aqui serão exibidos os detalhes da parte quando o nome for clicado -->
+        <p>Selecione uma parte para visualizar seus detalhes.</p>
+      </div>
     </div>
   </div>
 
-  <!-- ✅ Script movido para o final -->
+  <!-- Script carregado no final -->
   <script src="script.js"></script>
 </body>
 </html>
