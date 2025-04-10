@@ -1,3 +1,5 @@
+console.log("Script carregado!");
+
 const firebaseConfig = {
   apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
   authDomain: "painel-pendencias.firebaseapp.com",
