@@ -24,17 +24,27 @@ const loginBtn = document.getElementById("login-btn");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const loginScreen = document.getElementById("login-screen");
-const mainPanel = document.getElementById("main-panel");
+const dashboard = document.getElementById("dashboard");
 const loginError = document.getElementById("login-error");
 
 const pendenciasList = document.getElementById("pendencias-list");
-const detalhesContainer = document.getElementById("detalhes-container");
+const detalhesSection = document.getElementById("detalhes-section");
 const salvarBtn = document.getElementById("salvar-btn");
 const salvarMsg = document.getElementById("salvar-msg");
 
 const novoAndamento = document.getElementById("novo-andamento");
 const enviarAndamento = document.getElementById("enviar-andamento");
 const andamentosList = document.getElementById("andamentos-list");
+const detPartesList = document.getElementById("det-partes-list");
+
+// Modal para exibir detalhes da Parte
+const modal = document.getElementById("modal");
+const modalClose = document.querySelector(".modal .close");
+const parteDetailsContainer = document.getElementById("parte-details-container");
+
+// Abas
+const tabs = document.querySelectorAll(".tab");
+const tabPanels = document.querySelectorAll(".tab-panel");
 
 loginBtn.addEventListener("click", async () => {
   console.log("🔐 Botão de login clicado");
@@ -50,7 +60,7 @@ loginBtn.addEventListener("click", async () => {
     const result = await auth.signInWithEmailAndPassword(email, password);
     console.log("✅ Login bem-sucedido:", result.user.email);
     loginScreen.classList.add("hidden");
-    mainPanel.classList.remove("hidden");
+    dashboard.classList.remove("hidden");
     carregarPendencias();
   } catch (err) {
     console.error("❌ Erro ao fazer login:", err.message);
@@ -58,7 +68,6 @@ loginBtn.addEventListener("click", async () => {
   }
 });
 
-// Função para calcular os dias restantes a partir de um prazo
 function calcularDiasRestantes(prazo) {
   const hoje = new Date();
   const dataPrazo = new Date(prazo);
@@ -66,7 +75,6 @@ function calcularDiasRestantes(prazo) {
   return diff;
 }
 
-// CARREGAR PENDÊNCIAS AGRUPADAS POR DESCRIÇÃO (accordion)
 async function carregarPendencias() {
   pendenciasList.innerHTML = "";
   
@@ -82,7 +90,6 @@ async function carregarPendencias() {
     grupos[descricao].push({ id: doc.id, data });
   });
 
-  // Construir cada grupo – os itens iniciam recolhidos
   for (const descricao in grupos) {
     const grupoContainer = document.createElement("div");
     grupoContainer.className = "grupo-descricao";
@@ -91,16 +98,15 @@ async function carregarPendencias() {
     header.textContent = descricao;
     header.addEventListener("click", () => {
       const ul = grupoContainer.querySelector("ul");
-      ul.style.display = (ul.style.display === "none" ? "block" : "none");
+      ul.style.display = ul.style.display === "none" ? "block" : "none";
     });
     grupoContainer.appendChild(header);
     
     const ul = document.createElement("ul");
-    ul.style.display = "none"; // inicia recolhido
+    ul.style.display = "none";
     grupos[descricao].forEach(item => {
       const { data } = item;
       const li = document.createElement("li");
-      // Se o processo está resolvido, exibe em verde
       if (data.status === "resolvido") {
         li.textContent = `${data.processo} (Resolvido)`;
         li.style.color = "green";
@@ -110,7 +116,6 @@ async function carregarPendencias() {
         if (diasRestantes >= 0) info += `(faltam ${diasRestantes} dias)`;
         else info += `(vencido)`;
         li.textContent = info;
-        // Se já passou do prazo ou faltam menos de 7 dias, exibe em vermelho
         if (diasRestantes < 7) {
           li.style.color = "red";
         }
@@ -123,21 +128,19 @@ async function carregarPendencias() {
   }
 }
 
-// CARREGAR DETALHES DA PENDÊNCIA
 async function carregarDetalhes(docId) {
   const doc = await db.collection("pendencias").doc(docId).get();
   if (!doc.exists) return;
   const data = doc.data();
   currentDocId = docId;
   salvarMsg.textContent = "";
-  detalhesContainer.classList.remove("hidden");
+  detalhesSection.classList.remove("hidden");
 
   document.getElementById("det-processo-text").textContent = data.processo;
   document.getElementById("det-descricao-text").textContent = data.descricao;
   document.getElementById("det-data-inicial-text").textContent = new Date(data.data_inicial).toISOString().split("T")[0];
   document.getElementById("det-prazo-text").textContent = new Date(data.prazo).toISOString().split("T")[0];
 
-  // Atualiza status e comentários
   document.getElementById("det-status").value = data.status || "pendente";
   originalValues["det-status"] = data.status || "pendente";
 
@@ -146,107 +149,7 @@ async function carregarDetalhes(docId) {
   originalValues["det-comentarios"] = data.comentarios || "";
 
   carregarAndamentos(data.andamentos || []);
-
-  // Carregar as partes
-  const partesList = document.getElementById("det-partes-list");
-  partesList.innerHTML = "";
-  if (Array.isArray(data.partes)) {
-    data.partes.forEach((parte, index) => {
-      const li = document.createElement("li");
-      const nome = (typeof parte === "object") ? parte.nome : parte;
-      li.innerHTML = `<span class="parte-name">${nome}</span>`;
-      
-      // Container com os detalhes da parte
-      const detailsDiv = document.createElement("div");
-      detailsDiv.classList.add("parte-details", "hidden");
-      detailsDiv.innerHTML = `
-        <label>Telefone: <input type="text" class="parte-telefone" value="${(parte.telefone) || ''}" data-index="${index}" /></label>
-        <label>Email: <input type="text" class="parte-email" value="${(parte.email) || ''}" data-index="${index}" /></label>
-        <label>Contato: 
-          <select class="parte-contato" data-index="${index}">
-            <option value="sim" ${(parte.contato === "sim") ? "selected" : ""}>Sim</option>
-            <option value="não" ${(parte.contato === "não") ? "selected" : ""}>Não</option>
-          </select>
-        </label>
-        <label>Status: 
-          <select class="parte-status" data-index="${index}">
-            <option value="vivo" ${(parte.status === "vivo") ? "selected" : ""}>Vivo</option>
-            <option value="falecido" ${(parte.status === "falecido") ? "selected" : ""}>Falecido</option>
-          </select>
-        </label>
-        <div class="parte-herdeiros ${parte.status === "falecido" ? "" : "hidden"}">
-          <label>Herdeiros: <input type="text" class="parte-herdeiros-input" value="${(parte.herdeiros) || ''}" data-index="${index}" /></label>
-        </div>
-        <label>Assinou Acordo:
-          <select class="parte-assinou" data-index="${index}">
-            <option value="sim" ${(parte.assinou === "sim") ? "selected" : ""}>Sim</option>
-            <option value="não" ${(parte.assinou === "não") ? "selected" : ""}>Não</option>
-          </select>
-        </label>
-        <button class="parte-salvar" data-index="${index}">Salvar Parte</button>
-      `;
-      // Ao clicar no nome da parte, exibe seus detalhes na coluna direita
-      li.querySelector(".parte-name").addEventListener("click", () => {
-        const parteDetailsContainer = document.getElementById("parte-details-container");
-        parteDetailsContainer.innerHTML = "";
-        const header = document.createElement("h3");
-        header.textContent = `Detalhes da Parte - ${nome}`;
-        parteDetailsContainer.appendChild(header);
-        detailsDiv.classList.remove("hidden");
-        parteDetailsContainer.appendChild(detailsDiv);
-        parteDetailsContainer.classList.remove("hidden");
-      });
-      li.appendChild(detailsDiv);
-      partesList.appendChild(li);
-    });
-
-    // Configura os event listeners dos selects dentro dos detalhes das partes
-    document.querySelectorAll(".parte-status").forEach(select => {
-      select.addEventListener("change", (e) => {
-        const li = e.target.closest("li");
-        const herdeirosDiv = li.querySelector(".parte-herdeiros");
-        if (e.target.value === "falecido") {
-          herdeirosDiv.classList.remove("hidden");
-        } else {
-          herdeirosDiv.classList.add("hidden");
-        }
-      });
-    });
-
-    // Usando .closest(".parte-details") para acessar corretamente os inputs
-    document.querySelectorAll(".parte-salvar").forEach(button => {
-      button.addEventListener("click", async (e) => {
-        const index = e.target.dataset.index;
-        const container = e.target.closest(".parte-details");
-        if (!container) return;
-      
-        const telefone = container.querySelector(".parte-telefone").value;
-        const email = container.querySelector(".parte-email").value;
-        const contato = container.querySelector(".parte-contato").value;
-        const status = container.querySelector(".parte-status").value;
-        const herdeirosElement = container.querySelector(".parte-herdeiros-input");
-        const herdeiros = herdeirosElement ? herdeirosElement.value : "";
-        const assinou = container.querySelector(".parte-assinou").value;
-      
-        // Atualiza a parte no documento do Firebase
-        const docRef = db.collection("pendencias").doc(currentDocId);
-        const docSnap = await docRef.get();
-        let partes = docSnap.data().partes;
-        if (!Array.isArray(partes)) partes = [];
-        partes[index] = {
-          nome: (typeof partes[index] === "object" && partes[index].nome) ? partes[index].nome : partes[index],
-          telefone,
-          email,
-          contato,
-          status,
-          herdeiros: status === "falecido" ? herdeiros : "",
-          assinou
-        };
-        await docRef.update({ partes });
-        alert("Informações da parte atualizadas!");
-      });
-    });
-  }
+  carregarPartes(data.partes || []);
 }
 
 function carregarAndamentos(lista) {
@@ -262,7 +165,90 @@ function carregarAndamentos(lista) {
   });
 }
 
-// Edição dos comentários na pendência (mesmo fluxo atual)
+function carregarPartes(partes) {
+  detPartesList.innerHTML = "";
+  partes.forEach((parte, index) => {
+    const li = document.createElement("li");
+    const nome = (typeof parte === "object") ? parte.nome : parte;
+    li.textContent = nome;
+    li.addEventListener("click", () => abrirModalParte(parte, index));
+    detPartesList.appendChild(li);
+  });
+}
+
+function abrirModalParte(parte, index) {
+  parteDetailsContainer.innerHTML = `
+    <h3>Detalhes da Parte - ${ (typeof parte === "object") ? parte.nome : parte }</h3>
+    <label>Telefone: <input type="text" class="parte-telefone" value="${parte.telefone || ''}" data-index="${index}" /></label>
+    <label>Email: <input type="text" class="parte-email" value="${parte.email || ''}" data-index="${index}" /></label>
+    <label>Contato: 
+      <select class="parte-contato" data-index="${index}">
+        <option value="sim" ${(parte.contato === "sim") ? "selected" : ""}>Sim</option>
+        <option value="não" ${(parte.contato === "não") ? "selected" : ""}>Não</option>
+      </select>
+    </label>
+    <label>Status: 
+      <select class="parte-status" data-index="${index}">
+        <option value="vivo" ${(parte.status === "vivo") ? "selected" : ""}>Vivo</option>
+        <option value="falecido" ${(parte.status === "falecido") ? "selected" : ""}>Falecido</option>
+      </select>
+    </label>
+    <div class="parte-herdeiros ${parte.status === "falecido" ? "" : "hidden"}">
+      <label>Herdeiros: <input type="text" class="parte-herdeiros-input" value="${parte.herdeiros || ''}" data-index="${index}" /></label>
+    </div>
+    <label>Assinou Acordo:
+      <select class="parte-assinou" data-index="${index}">
+        <option value="sim" ${(parte.assinou === "sim") ? "selected" : ""}>Sim</option>
+        <option value="não" ${(parte.assinou === "não") ? "selected" : ""}>Não</option>
+      </select>
+    </label>
+    <button class="parte-salvar" data-index="${index}">Salvar Parte</button>
+  `;
+  modal.classList.remove("hidden");
+
+  // Exibe/oculta campo de herdeiros baseado no status
+  const selectStatus = parteDetailsContainer.querySelector(".parte-status");
+  selectStatus.addEventListener("change", (e) => {
+    const herdeirosDiv = parteDetailsContainer.querySelector(".parte-herdeiros");
+    if(e.target.value === "falecido"){
+      herdeirosDiv.classList.remove("hidden");
+    } else {
+      herdeirosDiv.classList.add("hidden");
+    }
+  });
+
+  const salvarParteBtn = parteDetailsContainer.querySelector(".parte-salvar");
+  salvarParteBtn.addEventListener("click", async () => {
+    const container = parteDetailsContainer;
+    const telefone = container.querySelector(".parte-telefone").value;
+    const email = container.querySelector(".parte-email").value;
+    const contato = container.querySelector(".parte-contato").value;
+    const status = container.querySelector(".parte-status").value;
+    const herdeirosElement = container.querySelector(".parte-herdeiros-input");
+    const herdeiros = herdeirosElement ? herdeirosElement.value : "";
+    const assinou = container.querySelector(".parte-assinou").value;
+    
+    const docRef = db.collection("pendencias").doc(currentDocId);
+    const docSnap = await docRef.get();
+    let partes = docSnap.data().partes;
+    if (!Array.isArray(partes)) partes = [];
+    partes[index] = {
+      nome: (typeof partes[index] === "object" && partes[index].nome) ? partes[index].nome : partes[index],
+      telefone,
+      email,
+      contato,
+      status,
+      herdeiros: status === "falecido" ? herdeiros : "",
+      assinou
+    };
+    await docRef.update({ partes });
+    alert("Informações da parte atualizadas!");
+    modal.classList.add("hidden");
+    carregarDetalhes(currentDocId);
+  });
+}
+
+// Edição dos comentários
 document.querySelectorAll(".editar").forEach(botao => {
   if (botao.dataset.alvo === "det-descricao") return;
   botao.addEventListener("click", () => {
@@ -286,7 +272,6 @@ document.querySelectorAll(".editar").forEach(botao => {
 salvarBtn.addEventListener("click", async () => {
   if (!currentDocId) return;
   const dados = {
-    // "descricao" não é mais editável
     status: document.getElementById("det-status").value,
     comentarios: document.getElementById("det-comentarios").value.trim()
   };
@@ -312,4 +297,32 @@ enviarAndamento.addEventListener("click", async () => {
   await docRef.update({ andamentos: novoArray });
   novoAndamento.value = "";
   carregarDetalhes(currentDocId);
+});
+
+// Alternar entre abas
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const target = tab.dataset.tab;
+    tabPanels.forEach(panel => {
+      if(panel.id === target + "-tab"){
+        panel.classList.add("active");
+      } else {
+        panel.classList.remove("active");
+      }
+    });
+  });
+});
+
+// Fechar modal
+modalClose.addEventListener("click", () => {
+  modal.classList.add("hidden");
+});
+
+// Fechar modal ao clicar fora do conteúdo
+window.addEventListener("click", (e) => {
+  if(e.target === modal){
+    modal.classList.add("hidden");
+  }
 });
