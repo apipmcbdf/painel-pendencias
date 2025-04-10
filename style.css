@@ -221,3 +221,40 @@ button:hover {
   font-size: 24px;
   cursor: pointer;
 }
+
+/* Novas regras para a seção "Adicionar Andamento" */
+
+/* Container da área de input para o andamento */
+.andamento-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Lista de andamentos: cada item exibido em destaque */
+#andamentos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Estilo para cada item de andamento */
+.andamento-item {
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajusta a margem do parágrafo do texto do andamento */
+.andamento-item p {
+  margin: 0 0 10px 0;
+}
+
+/* Estilo para exibir o autor e a data de forma sutil */
+.andamento-item small {
+  color: #555;
+  font-style: italic;
+}
