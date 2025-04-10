@@ -36,16 +36,16 @@ body {
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
 }
 
-/* Estilização da Coluna da Direita (Detalhes da Parte) */
+/* Estilo para a Coluna da Direita (Detalhes da Parte) */
 #right-column {
   background-color: #fff;
 }
 #right-column h3 {
-  text-align: center;
   background-color: #007bff;
   color: #fff;
   padding: 10px;
   border-radius: 6px;
+  margin-bottom: 10px;
 }
 
 /* Listas e itens */
@@ -64,11 +64,6 @@ li {
 
 li:hover {
   background-color: #eef5ff;
-}
-
-/* Classe para pendência resolvida */
-li.resolvido {
-  color: green;
 }
 
 /* Inputs, selects, textarea e botões */
@@ -150,7 +145,7 @@ button:hover {
   margin-bottom: 15px;
 }
 
-/* Estilos para o Accordion e grupos de pendências */
+/* Accordion e grupos de pendências */
 .grupo-descricao {
   margin-bottom: 20px;
   border: 1px solid #ddd;
@@ -169,8 +164,8 @@ button:hover {
   border-radius: 4px;
 }
 
-/* Detalhes da Parte (coluna da direita) */
-#parte-details-display {
+/* Container de detalhes da parte na Coluna da Direita */
+#parte-details-container {
   margin-top: 10px;
   padding: 10px;
   border-top: 1px solid #ccc;
