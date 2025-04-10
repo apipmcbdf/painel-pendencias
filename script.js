@@ -1,6 +1,5 @@
 // script.js
 
-// 🔁 Substitua com suas credenciais reais:
 const firebaseConfig = {
   apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
   authDomain: "painel-pendencias.firebaseapp.com",
@@ -88,19 +87,33 @@ async function carregarDetalhes(docId) {
   const data = doc.data();
   currentDocId = docId;
 
-  // Text
   document.getElementById("det-processo-text").textContent = data.processo;
-  document.getElementById("det-descricao-text").textContent = data.descricao;
-  document.getElementById("det-data-inicial-text").textContent = data.data_inicial;
-  document.getElementById("det-prazo-text").textContent = data.prazo;
-  document.getElementById("det-comentarios-text").textContent = data.comentarios;
-
-  // Inputs
   document.getElementById("det-processo").value = data.processo;
+
+  const partesList = document.getElementById("det-partes-list");
+  const partesTextarea = document.getElementById("det-partes");
+  partesList.innerHTML = "";
+  if (Array.isArray(data.partes)) {
+    data.partes.forEach(parte => {
+      const li = document.createElement("li");
+      li.textContent = parte;
+      partesList.appendChild(li);
+    });
+    partesTextarea.value = data.partes.join("; ");
+  }
+
+  document.getElementById("det-descricao-text").textContent = data.descricao;
   document.getElementById("det-descricao").value = data.descricao;
+
+  document.getElementById("det-data-inicial-text").textContent = data.data_inicial;
   document.getElementById("det-data-inicial").value = data.data_inicial;
+
+  document.getElementById("det-prazo-text").textContent = data.prazo;
   document.getElementById("det-prazo").value = data.prazo;
+
   document.getElementById("det-status").value = data.status || "pendente";
+
+  document.getElementById("det-comentarios-text").textContent = data.comentarios;
   document.getElementById("det-comentarios").value = data.comentarios || "";
 
   detalhesContainer.classList.remove("hidden");
@@ -125,13 +138,21 @@ function carregarAndamentos(lista) {
 document.querySelectorAll(".editar").forEach(botao => {
   botao.addEventListener("click", () => {
     const id = botao.dataset.alvo;
-    document.getElementById(`${id}-text`).classList.add("hidden");
-    document.getElementById(id).classList.remove("hidden");
+    const text = document.getElementById(`${id}-text`);
+    const input = document.getElementById(id);
+    if (text) text.classList.add("hidden");
+    input.classList.remove("hidden");
+    input.focus();
   });
 });
 
 salvarBtn.addEventListener("click", async () => {
   if (!currentDocId) return;
+
+  const partes = document.getElementById("det-partes").value
+    .split(";")
+    .map(p => p.trim())
+    .filter(p => p);
 
   const dados = {
     processo: document.getElementById("det-processo").value.trim(),
@@ -139,7 +160,8 @@ salvarBtn.addEventListener("click", async () => {
     data_inicial: document.getElementById("det-data-inicial").value,
     prazo: document.getElementById("det-prazo").value,
     status: document.getElementById("det-status").value,
-    comentarios: document.getElementById("det-comentarios").value.trim()
+    comentarios: document.getElementById("det-comentarios").value.trim(),
+    partes: partes
   };
 
   await db.collection("pendencias").doc(currentDocId).update(dados);
