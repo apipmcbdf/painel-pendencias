@@ -14,6 +14,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let currentDocId = null;
+const originalValues = {};
 
 const nomesPorEmail = {
   "advogada1@teste.com": "Mario Encanador"
@@ -32,13 +33,16 @@ const detalhesContainer = document.getElementById("detalhes-container");
 const salvarBtn = document.getElementById("salvar-btn");
 const salvarMsg = document.getElementById("salvar-msg");
 
+const novoAndamento = document.getElementById("novo-andamento");
+const enviarAndamento = document.getElementById("enviar-andamento");
+const andamentosList = document.getElementById("andamentos-list");
+
 loginBtn.addEventListener("click", async () => {
   console.log("🔐 Botão de login clicado");
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    console.warn("⚠️ Email ou senha em branco");
     loginError.textContent = "Preencha todos os campos.";
     return;
   }
@@ -55,25 +59,36 @@ loginBtn.addEventListener("click", async () => {
   }
 });
 
+function calcularDiasRestantes(prazo) {
+  const hoje = new Date();
+  const dataPrazo = new Date(prazo);
+  const diff = Math.ceil((dataPrazo - hoje) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
 async function carregarPendencias() {
   pendenciasList.innerHTML = "";
   resolvidasList.innerHTML = "";
-
   const snapshot = await db.collection("pendencias").get();
   const hoje = new Date();
 
   snapshot.forEach(doc => {
     const data = doc.data();
     const prazo = new Date(data.prazo);
-    const status = data.status;
-
+    const diasRestantes = calcularDiasRestantes(data.prazo);
     const item = document.createElement("li");
-    item.textContent = data.processo;
+    item.textContent = `${data.processo} (${diasRestantes >= 0 ? 'faltam ' + diasRestantes + ' dias' : 'vencido'})`;
     item.addEventListener("click", () => carregarDetalhes(doc.id));
 
-    if (status === "resolvido" || prazo < hoje) {
-      item.classList.add(prazo < hoje ? "atrasada" : "resolvida");
+    if (data.status === "resolvido") {
+      item.classList.add("resolvida");
       resolvidasList.appendChild(item);
+    } else if (prazo < hoje) {
+      item.classList.add("atrasada");
+      resolvidasList.appendChild(item);
+    } else if (diasRestantes === 0) {
+      item.classList.add("vencendo-hoje");
+      pendenciasList.appendChild(item);
     } else {
       pendenciasList.appendChild(item);
     }
@@ -83,9 +98,10 @@ async function carregarPendencias() {
 async function carregarDetalhes(docId) {
   const doc = await db.collection("pendencias").doc(docId).get();
   if (!doc.exists) return;
-
   const data = doc.data();
   currentDocId = docId;
+  salvarMsg.textContent = "";
+  detalhesContainer.classList.remove("hidden");
 
   document.getElementById("det-processo-text").textContent = data.processo;
 
@@ -101,30 +117,85 @@ async function carregarDetalhes(docId) {
 
   document.getElementById("det-descricao-text").textContent = data.descricao;
   document.getElementById("det-descricao").value = data.descricao;
+  originalValues["det-descricao"] = data.descricao;
 
   document.getElementById("det-data-inicial-text").textContent = data.data_inicial;
   document.getElementById("det-prazo-text").textContent = data.prazo;
 
   document.getElementById("det-status").value = data.status || "pendente";
+  originalValues["det-status"] = data.status || "pendente";
+
   document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
   document.getElementById("det-comentarios").value = data.comentarios || "";
+  originalValues["det-comentarios"] = data.comentarios || "";
 
-  detalhesContainer.classList.remove("hidden");
-  salvarMsg.textContent = "";
+  carregarAndamentos(data.andamentos || []);
 }
+
+function carregarAndamentos(lista) {
+  andamentosList.innerHTML = "";
+  lista.forEach(and => {
+    const div = document.createElement("div");
+    div.className = "andamento-item";
+    div.innerHTML = `
+      <p>${and.texto}</p>
+      <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
+    `;
+    andamentosList.appendChild(div);
+  });
+}
+
+document.querySelectorAll(".editar").forEach(botao => {
+  botao.addEventListener("click", () => {
+    const id = botao.dataset.alvo;
+    const span = document.getElementById(`${id}-text`);
+    const input = document.getElementById(id);
+
+    if (!input || !span) return;
+
+    if (input.classList.contains("hidden")) {
+      input.classList.remove("hidden");
+      span.classList.add("hidden");
+    } else {
+      input.classList.add("hidden");
+      span.classList.remove("hidden");
+      input.value = originalValues[id];
+    }
+  });
+});
 
 salvarBtn.addEventListener("click", async () => {
   if (!currentDocId) return;
 
-  const status = document.getElementById("det-status").value;
-  const comentarios = document.getElementById("det-comentarios").value;
+  const dados = {
+    descricao: document.getElementById("det-descricao").value.trim(),
+    status: document.getElementById("det-status").value,
+    comentarios: document.getElementById("det-comentarios").value.trim()
+  };
 
-  await db.collection("pendencias").doc(currentDocId).update({
-    status,
-    comentarios
-  });
-
+  await db.collection("pendencias").doc(currentDocId).update(dados);
   salvarMsg.textContent = "Atualizado com sucesso!";
-  detalhesContainer.classList.add("hidden");
   carregarPendencias();
+  carregarDetalhes(currentDocId);
+});
+
+enviarAndamento.addEventListener("click", async () => {
+  if (!currentDocId || !novoAndamento.value.trim()) return;
+
+  const texto = novoAndamento.value.trim();
+  const email = auth.currentUser.email;
+  const autor = nomesPorEmail[email] || email;
+  const data = new Date().toISOString();
+
+  const docRef = db.collection("pendencias").doc(currentDocId);
+  const doc = await docRef.get();
+  const dados = doc.data();
+
+  const novoArray = dados.andamentos || [];
+  novoArray.push({ texto, autor, data });
+
+  await docRef.update({ andamentos: novoArray });
+
+  novoAndamento.value = "";
+  carregarDetalhes(currentDocId);
 });
