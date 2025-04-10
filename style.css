@@ -1,4 +1,3 @@
-/* style.css */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
@@ -6,52 +5,16 @@ body {
   background-color: #f2f4f7;
 }
 
-#login-screen, #main-panel {
-  max-width: 1400px;
-  margin: 40px auto;
-  padding: 20px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
 .hidden {
   display: none;
 }
 
-input, select, textarea {
-  width: 100%;
-  margin: 10px 0;
-  padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-button {
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-.error {
-  color: red;
-  margin-top: 10px;
-}
-
-.success {
-  color: green;
-  margin-top: 10px;
-}
-
 #main-panel {
+  max-width: 1400px;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   display: grid;
   grid-template-columns: 1fr 2.2fr 1fr;
   gap: 20px;
@@ -100,8 +63,40 @@ li.vencendo-hoje {
   color: #b8860b;
 }
 
+input, select, textarea {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
 textarea {
   resize: vertical;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+.success {
+  color: green;
+  margin-top: 10px;
 }
 
 #andamentos-list {
@@ -149,6 +144,8 @@ textarea:not(.hidden),
 select:not(.hidden) {
   background-color: #fff9dd;
 }
+
+/* ✅ LOGIN FINAL BONITO E ISOLADO */
 #login-screen {
   position: fixed;
   top: 0;
