@@ -1,35 +1,37 @@
 // script.js
 
+// 🔁 Substitua com suas credenciais reais:
 const firebaseConfig = {
-  apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
-  authDomain: "painel-pendencias.firebaseapp.com",
-  projectId: "painel-pendencias",
-  storageBucket: "painel-pendencias.firebasestorage.app",
-  messagingSenderId: "969369108934",
-  appId: "1:969369108934:web:88c5ac5a8acd987509f2c7"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_BUCKET.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const loginScreen = document.getElementById("login-screen");
-const mainPanel = document.getElementById("main-panel");
+let currentDocId = null;
+
 const loginBtn = document.getElementById("login-btn");
-const loginError = document.getElementById("login-error");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const loginScreen = document.getElementById("login-screen");
+const mainPanel = document.getElementById("main-panel");
+const loginError = document.getElementById("login-error");
 
 const pendenciasList = document.getElementById("pendencias-list");
 const resolvidasList = document.getElementById("resolvidas-list");
 const detalhesContainer = document.getElementById("detalhes-container");
 const salvarBtn = document.getElementById("salvar-btn");
 const salvarMsg = document.getElementById("salvar-msg");
+
 const novoAndamento = document.getElementById("novo-andamento");
 const enviarAndamento = document.getElementById("enviar-andamento");
 const andamentosList = document.getElementById("andamentos-list");
-
-let currentDocId = null;
 
 loginBtn.addEventListener("click", async () => {
   const email = emailInput.value;
@@ -60,13 +62,12 @@ async function carregarPendencias() {
   snapshot.forEach(doc => {
     const data = doc.data();
     const prazo = new Date(data.prazo);
-    const status = data.status;
     const diasRestantes = calcularDiasRestantes(data.prazo);
     const item = document.createElement("li");
     item.textContent = `${data.processo} (${diasRestantes >= 0 ? 'faltam ' + diasRestantes + ' dias' : 'vencido'})`;
     item.addEventListener("click", () => carregarDetalhes(doc.id));
 
-    if (status === "resolvido") {
+    if (data.status === "resolvido") {
       item.classList.add("resolvida");
       resolvidasList.appendChild(item);
     } else if (prazo < hoje) {
@@ -84,36 +85,68 @@ async function carregarPendencias() {
 async function carregarDetalhes(docId) {
   const doc = await db.collection("pendencias").doc(docId).get();
   if (!doc.exists) return;
-
   const data = doc.data();
   currentDocId = docId;
 
-  document.getElementById("det-processo").textContent = data.processo;
-  document.getElementById("det-descricao").textContent = data.descricao;
-  document.getElementById("det-data-inicial").textContent = data.data_inicial;
-  document.getElementById("det-prazo").textContent = data.prazo;
+  // Text
+  document.getElementById("det-processo-text").textContent = data.processo;
+  document.getElementById("det-descricao-text").textContent = data.descricao;
+  document.getElementById("det-data-inicial-text").textContent = data.data_inicial;
+  document.getElementById("det-prazo-text").textContent = data.prazo;
+  document.getElementById("det-comentarios-text").textContent = data.comentarios;
+
+  // Inputs
+  document.getElementById("det-processo").value = data.processo;
+  document.getElementById("det-descricao").value = data.descricao;
+  document.getElementById("det-data-inicial").value = data.data_inicial;
+  document.getElementById("det-prazo").value = data.prazo;
   document.getElementById("det-status").value = data.status || "pendente";
   document.getElementById("det-comentarios").value = data.comentarios || "";
 
-  novoAndamento.value = "";
-  carregarAndamentos(data.andamentos || []);
-
   detalhesContainer.classList.remove("hidden");
   salvarMsg.textContent = "";
+
+  carregarAndamentos(data.andamentos || []);
 }
 
 function carregarAndamentos(lista) {
   andamentosList.innerHTML = "";
-  lista.forEach(andamento => {
+  lista.forEach(and => {
     const div = document.createElement("div");
-    div.classList.add("andamento-item");
+    div.className = "andamento-item";
     div.innerHTML = `
-      <p>${andamento.texto}</p>
-      <small>${andamento.autor} — ${new Date(andamento.data).toLocaleString()}</small>
+      <p>${and.texto}</p>
+      <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
     `;
     andamentosList.appendChild(div);
   });
 }
+
+document.querySelectorAll(".editar").forEach(botao => {
+  botao.addEventListener("click", () => {
+    const id = botao.dataset.alvo;
+    document.getElementById(`${id}-text`).classList.add("hidden");
+    document.getElementById(id).classList.remove("hidden");
+  });
+});
+
+salvarBtn.addEventListener("click", async () => {
+  if (!currentDocId) return;
+
+  const dados = {
+    processo: document.getElementById("det-processo").value.trim(),
+    descricao: document.getElementById("det-descricao").value.trim(),
+    data_inicial: document.getElementById("det-data-inicial").value,
+    prazo: document.getElementById("det-prazo").value,
+    status: document.getElementById("det-status").value,
+    comentarios: document.getElementById("det-comentarios").value.trim()
+  };
+
+  await db.collection("pendencias").doc(currentDocId).update(dados);
+  salvarMsg.textContent = "Atualizado com sucesso!";
+  carregarPendencias();
+  carregarDetalhes(currentDocId);
+});
 
 enviarAndamento.addEventListener("click", async () => {
   if (!currentDocId || !novoAndamento.value.trim()) return;
@@ -132,19 +165,4 @@ enviarAndamento.addEventListener("click", async () => {
 
   novoAndamento.value = "";
   carregarDetalhes(currentDocId);
-});
-
-salvarBtn.addEventListener("click", async () => {
-  if (!currentDocId) return;
-  const status = document.getElementById("det-status").value;
-  const comentarios = document.getElementById("det-comentarios").value;
-
-  await db.collection("pendencias").doc(currentDocId).update({
-    status,
-    comentarios
-  });
-
-  salvarMsg.textContent = "Atualizado com sucesso!";
-  detalhesContainer.classList.add("hidden");
-  carregarPendencias();
 });
