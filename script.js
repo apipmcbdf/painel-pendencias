@@ -201,7 +201,7 @@ async function carregarDetalhes(docId) {
       partesList.appendChild(li);
     });
 
-    // Tratamento dos selects e dos botões dentro dos detalhes das partes
+    // Configura os event listeners dos selects dentro dos detalhes das partes
     document.querySelectorAll(".parte-status").forEach(select => {
       select.addEventListener("change", (e) => {
         const li = e.target.closest("li");
@@ -214,18 +214,22 @@ async function carregarDetalhes(docId) {
       });
     });
 
+    // Alteração: Utiliza .closest(".parte-details") para obter os inputs corretamente
     document.querySelectorAll(".parte-salvar").forEach(button => {
       button.addEventListener("click", async (e) => {
         const index = e.target.dataset.index;
-        const li = e.target.closest("li");
-        const telefone = li.querySelector(".parte-telefone").value;
-        const email = li.querySelector(".parte-email").value;
-        const contato = li.querySelector(".parte-contato").value;
-        const status = li.querySelector(".parte-status").value;
-        const herdeiros = li.querySelector(".parte-herdeiros-input").value;
-        const assinou = li.querySelector(".parte-assinou").value;
-
-        // Atualiza a parte no documento Firebase
+        const container = e.target.closest(".parte-details");
+        if (!container) return;
+      
+        const telefone = container.querySelector(".parte-telefone").value;
+        const email = container.querySelector(".parte-email").value;
+        const contato = container.querySelector(".parte-contato").value;
+        const status = container.querySelector(".parte-status").value;
+        const herdeirosElement = container.querySelector(".parte-herdeiros-input");
+        const herdeiros = herdeirosElement ? herdeirosElement.value : "";
+        const assinou = container.querySelector(".parte-assinou").value;
+      
+        // Atualiza a parte no documento do Firebase
         const docRef = db.collection("pendencias").doc(currentDocId);
         const docSnap = await docRef.get();
         let partes = docSnap.data().partes;
@@ -259,7 +263,7 @@ function carregarAndamentos(lista) {
   });
 }
 
-// Edição dos comentários na pendência (mantém o mesmo fluxo)
+// Edição dos comentários na pendência (mesmo fluxo atual)
 document.querySelectorAll(".editar").forEach(botao => {
   if (botao.dataset.alvo === "det-descricao") return;
   botao.addEventListener("click", () => {
