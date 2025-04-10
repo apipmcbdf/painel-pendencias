@@ -14,6 +14,11 @@ const db = firebase.firestore();
 let currentDocId = null;
 const originalValues = {};
 
+// Lista fixa de nomes por email
+const nomesPorEmail = {
+  "advogada1@teste.com": "Mario Encanador"
+};
+
 const loginBtn = document.getElementById("login-btn");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -166,8 +171,10 @@ salvarBtn.addEventListener("click", async () => {
 
 enviarAndamento.addEventListener("click", async () => {
   if (!currentDocId || !novoAndamento.value.trim()) return;
+
   const texto = novoAndamento.value.trim();
-  const autor = auth.currentUser.email;
+  const email = auth.currentUser.email;
+  const autor = nomesPorEmail[email] || email;
   const data = new Date().toISOString();
 
   const docRef = db.collection("pendencias").doc(currentDocId);
