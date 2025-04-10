@@ -1,18 +1,18 @@
 /* style.css */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
+  background-color: #f2f4f7;
 }
 
 #login-screen, #main-panel {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 40px auto;
   padding: 20px;
   background-color: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .hidden {
@@ -22,10 +22,10 @@ body {
 input, select, textarea {
   width: 100%;
   margin: 10px 0;
-  padding: 8px;
+  padding: 10px;
   font-size: 1rem;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 button {
@@ -33,7 +33,7 @@ button {
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
@@ -52,31 +52,39 @@ button:hover {
 }
 
 #main-panel {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 2.2fr 1fr;
   gap: 20px;
 }
 
 #left-column, #center-column, #right-column {
-  flex: 1;
-  background-color: #fafafa;
-  padding: 15px;
-  border-radius: 8px;
+  background-color: #fdfdfd;
+  padding: 20px;
+  border-radius: 10px;
   border: 1px solid #ddd;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#center-column {
+  background-color: #f9fcff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
 }
 
 ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 li {
-  padding: 8px;
+  padding: 10px;
   border-bottom: 1px solid #ccc;
   cursor: pointer;
 }
 
 li:hover {
-  background-color: #eee;
+  background-color: #eef5ff;
 }
 
 li.resolvida {
@@ -117,34 +125,27 @@ textarea {
   font-size: 0.85rem;
 }
 
-/* NOVOS ESTILOS PARA CAMPOS EDITÁVEIS */
-
+/* Botão de edição minimalista */
 .editar {
   background: none;
   border: none;
   color: #007bff;
-  margin-left: 8px;
+  margin-left: 5px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  padding: 0 5px;
 }
 
 .editar:hover {
-  text-decoration: underline;
+  transform: scale(1.2);
 }
 
 .edit-group p {
-  position: relative;
   margin-bottom: 15px;
 }
 
 input:not(.hidden),
 textarea:not(.hidden),
 select:not(.hidden) {
-  border: 1px solid #aaa;
-  background-color: #fffdd0; /* amarelo claro para indicar edição */
-  padding: 6px;
-  margin-top: 6px;
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 1rem;
+  background-color: #fff9dd;
 }
