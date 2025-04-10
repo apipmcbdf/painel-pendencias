@@ -17,11 +17,7 @@ let currentDocId = null;
 const originalValues = {};
 
 const nomesPorEmail = {
-  "advogada1@teste.com": "Mario Encanador";
-  "yasmim.ribeiro@apipmcbdf.com.br": "Yasmim";
-  "grazielasuelimenini2@gmail.com": "Graziela";
-  "marcelledias.adv@gmail.com": "Marcelle";
-  "cavictor.franco@gmail.com": "Victor"
+  "advogada1@teste.com": "Mario Encanador"
 };
 
 const loginBtn = document.getElementById("login-btn");
@@ -193,7 +189,6 @@ async function carregarDetalhes(docId) {
       li.querySelector(".parte-name").addEventListener("click", () => {
         const parteDetailsContainer = document.getElementById("parte-details-container");
         parteDetailsContainer.innerHTML = "";
-        // Cria cabeçalho com o nome da parte
         const header = document.createElement("h3");
         header.textContent = `Detalhes da Parte - ${nome}`;
         parteDetailsContainer.appendChild(header);
@@ -218,7 +213,7 @@ async function carregarDetalhes(docId) {
       });
     });
 
-    // Alteração: Utiliza .closest(".parte-details") para obter os inputs corretamente
+    // Usando .closest(".parte-details") para acessar corretamente os inputs
     document.querySelectorAll(".parte-salvar").forEach(button => {
       button.addEventListener("click", async (e) => {
         const index = e.target.dataset.index;
