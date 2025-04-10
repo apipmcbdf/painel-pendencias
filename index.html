@@ -5,41 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Pendências</title>
   <link rel="stylesheet" href="style.css" />
-  <script defer src="script.js"></script>
+  <script type="module" src="script.js" defer></script>
 </head>
 <body>
   <div id="login-container" class="centralizado">
-    <!-- Login aqui -->
+    <h2>Login</h2>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
   </div>
-  <div id="main-panel" class="hidden">
-    <div id="pendencias">
-      <!-- Agrupamento por descrição será preenchido via JS -->
-    </div>
 
+  <div id="main-panel" class="hidden">
+    <div id="pendencias"></div>
     <div id="detalhes-pendencia">
       <h2>Detalhes da Pendência</h2>
       <p><strong>Processo:</strong> <span id="processo"></span></p>
-
       <div>
         <strong>Partes:</strong>
         <ul id="lista-partes"></ul>
       </div>
-
       <p><strong>Descrição:</strong> <span id="descricao"></span></p>
       <p><strong>Data Inicial:</strong> <span id="data-inicial"></span></p>
       <p><strong>Prazo Final:</strong> <span id="prazo-final"></span></p>
-
       <div>
         <label for="comentarios">Comentários:</label>
         <textarea id="comentarios"></textarea>
       </div>
-
       <button id="salvar-alteracoes">Salvar todas as alterações</button>
     </div>
-
-    <div id="andamentos">
-      <!-- Lista de andamentos -->
-    </div>
+    <div id="andamentos"></div>
   </div>
 </body>
 </html>
