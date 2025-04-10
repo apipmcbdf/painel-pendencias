@@ -24,7 +24,7 @@
     <!-- Coluna Esquerda: Pendências -->
     <div id="left-column">
       <h3>Pendências</h3>
-      <!-- Os grupos serão gerados aqui (accordion), iniciando recolhidos -->
+      <!-- Os grupos do accordion serão gerados aqui -->
       <div id="pendencias-list"></div>
     </div>
 
@@ -37,7 +37,7 @@
             <span id="det-processo-text"></span>
           </p>
           <p><strong>Partes:</strong></p>
-          <!-- Lista dos nomes das partes -->
+          <!-- Lista com os nomes das partes -->
           <ul id="det-partes-list"></ul>
 
           <!-- DESCRIÇÃO NÃO MAIS EDITÁVEL -->
@@ -80,17 +80,15 @@
       </div>
     </div>
 
-    <!-- Coluna Direita: Detalhes da Parte selecionada -->
+    <!-- Coluna Direita: Detalhes da Parte (inicia oculta) -->
     <div id="right-column">
-      <h3>Detalhes da Parte</h3>
-      <div id="parte-details-display">
-        <!-- Aqui serão exibidos os detalhes da parte quando o nome for clicado -->
-        <p>Selecione uma parte para visualizar seus detalhes.</p>
+      <div id="parte-details-container" class="hidden">
+        <!-- O cabeçalho e os detalhes serão inseridos dinamicamente -->
       </div>
     </div>
   </div>
 
-  <!-- Script carregado no final -->
+  <!-- ✅ Script movido para o final -->
   <script src="script.js"></script>
 </body>
 </html>
