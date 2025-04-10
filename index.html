@@ -23,7 +23,8 @@
   <div id="main-panel" class="hidden">
     <div id="left-column">
       <h3>Pendências</h3>
-      <ul id="pendencias-list"></ul>
+      <!-- As pendências agora serão agrupadas por descrição -->
+      <div id="pendencias-list"></div>
     </div>
 
     <div id="center-column">
@@ -34,12 +35,12 @@
             <span id="det-processo-text"></span>
           </p>
           <p><strong>Partes:</strong></p>
+          <!-- Cada item da lista de partes será clicável para expandir os detalhes -->
           <ul id="det-partes-list"></ul>
 
+          <!-- DESCRIÇÃO NÃO MAIS EDITÁVEL: removidos textarea e botão de edição -->
           <p><strong>Descrição:</strong> 
             <span id="det-descricao-text"></span>
-            <textarea id="det-descricao" class="hidden" rows="2"></textarea>
-            <button class="editar" data-alvo="det-descricao">✎</button>
           </p>
 
           <p><strong>Data Inicial:</strong> 
