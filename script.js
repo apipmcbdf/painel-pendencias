@@ -18,17 +18,16 @@ const originalValues = {};
 
 // Mapeamento entre número de processo e link da pasta no Google Drive
 const driveLinksPorProcesso = {
-  "0067270-02.2016.4.01.3400": "https://drive.google.com/drive/folders/1OY-83t2ueP4AZvAylFOWlV9dWDxAXFJ8?usp=drive_link";
-  "0067273-54.2016.4.01.3400": "https://drive.google.com/drive/folders/1hGOIsKXMMRCAWnQ1SARiKm6QvyXgPkBY?usp=sharing";
-  "1010657-37.2019.4.01.3400": "https://drive.google.com/drive/folders/1z3Zoxh6d1-x2lWxkHgDbBTCofoThOAy6?usp=sharing";
-  "1013014-87.2019.4.01.3400": "https://drive.google.com/drive/folders/1KRoS7eVNPhk2KtpbB9HtxnaIqAoyaChS?usp=sharing";
-  "1013785-31.2020.4.01.3400": "https://drive.google.com/drive/folders/1hHkKmbSrGRwS_JiHpZ0LEcUfsjPq2Teh?usp=sharing";
-  "1019563-16.2019.4.01.3400": "https://drive.google.com/drive/folders/1P-JfEI-yvmvllrlMJtPVKkuh4h-OgeVs?usp=sharing";
-  "1021826-45.2024.4.01.3400": "https://drive.google.com/drive/folders/1hGh9QLUoVj7x5fZrFcZyxruzozy1r3Ng?usp=sharing";
-  "1066615-71.2020.4.01.3400": "https://drive.google.com/drive/folders/1I8-EtZFSdwzGsOKvOg638fRW2qOVMISZ?usp=sharing";
-  "1080504-58.2021.4.01.3400": "https://drive.google.com/drive/folders/1LS_ao5pTAnbBuArL0Pnp63DY510pFAI9?usp=sharing";
+  "0067270-02.2016.4.01.3400": "https://drive.google.com/drive/folders/1OY-83t2ueP4AZvAylFOWlV9dWDxAXFJ8?usp=drive_link",
+  "0067273-54.2016.4.01.3400": "https://drive.google.com/drive/folders/1hGOIsKXMMRCAWnQ1SARiKm6QvyXgPkBY?usp=sharing",
+  "1010657-37.2019.4.01.3400": "https://drive.google.com/drive/folders/1z3Zoxh6d1-x2lWxkHgDbBTCofoThOAy6?usp=sharing",
+  "1013014-87.2019.4.01.3400": "https://drive.google.com/drive/folders/1KRoS7eVNPhk2KtpbB9HtxnaIqAoyaChS?usp=sharing",
+  "1013785-31.2020.4.01.3400": "https://drive.google.com/drive/folders/1hHkKmbSrGRwS_JiHpZ0LEcUfsjPq2Teh?usp=sharing",
+  "1019563-16.2019.4.01.3400": "https://drive.google.com/drive/folders/1P-JfEI-yvmvllrlMJtPVKkuh4h-OgeVs?usp=sharing",
+  "1021826-45.2024.4.01.3400": "https://drive.google.com/drive/folders/1hGh9QLUoVj7x5fZrFcZyxruzozy1r3Ng?usp=sharing",
+  "1066615-71.2020.4.01.3400": "https://drive.google.com/drive/folders/1I8-EtZFSdwzGsOKvOg638fRW2qOVMISZ?usp=sharing",
+  "1080504-58.2021.4.01.3400": "https://drive.google.com/drive/folders/1LS_ao5pTAnbBuArL0Pnp63DY510pFAI9?usp=sharing",
   "1111756-11.4.01.3400": "https://drive.google.com/drive/folders/1hHVZGiY7Y9VCpmiGOJoFxA5XZYWZGgH1?usp=sharing"
-  // Adicione outros processos e links conforme necessário
 };
 
 const nomesPorEmail = {
