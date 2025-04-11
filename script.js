@@ -16,6 +16,12 @@ const db = firebase.firestore();
 let currentDocId = null;
 const originalValues = {};
 
+// Mapeamento entre número de processo e link da pasta no Google Drive
+const driveLinksPorProcesso = {
+  "0067270-02.2016.4.01.3400": "https://drive.google.com/drive/folders/1OY-83t2ueP4AZvAylFOWlV9dWDxAXFJ8?usp=drive_link"
+  // Adicione outros processos e links conforme necessário
+};
+
 const nomesPorEmail = {
   "advogada1@teste.com": "Mario Encanador"
 };
@@ -136,7 +142,16 @@ async function carregarDetalhes(docId) {
   salvarMsg.textContent = "";
   detalhesSection.classList.remove("hidden");
 
-  document.getElementById("det-processo-text").textContent = data.processo;
+  // Exibe o número do processo e, se houver um link no mapeamento, adiciona o hyperlink
+  const processoElement = document.getElementById("det-processo-text");
+  const processoNumber = data.processo;
+  if (driveLinksPorProcesso[processoNumber]) {
+    processoElement.innerHTML = processoNumber +
+      ' <a href="' + driveLinksPorProcesso[processoNumber] + '" target="_blank">📁 Ver pasta</a>';
+  } else {
+    processoElement.textContent = processoNumber;
+  }
+
   document.getElementById("det-descricao-text").textContent = data.descricao;
   document.getElementById("det-data-inicial-text").textContent = new Date(data.data_inicial).toISOString().split("T")[0];
   document.getElementById("det-prazo-text").textContent = new Date(data.prazo).toISOString().split("T")[0];
@@ -169,8 +184,39 @@ function carregarPartes(partes) {
   detPartesList.innerHTML = "";
   partes.forEach((parte, index) => {
     const li = document.createElement("li");
-    const nome = (typeof parte === "object") ? parte.nome : parte;
-    li.textContent = nome;
+    let nome;
+    let flagsHTML = "";
+    
+    if (typeof parte === "object") {
+      nome = parte.nome;
+      
+      // Flag para contato
+      const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim") 
+                            ? "<span class='flag flag-contato'>✅</span>" 
+                            : "<span class='flag flag-contato'>❌</span>";
+      
+      // Flag para status (vivo ou falecido/morto)
+      let statusFlag = "<span class='flag flag-status'>❔</span>";
+      if (parte.status) {
+        const st = parte.status.toLowerCase();
+        statusFlag = (st === "vivo") 
+                      ? "<span class='flag flag-status'>🙂</span>" 
+                      : ((st === "falecido" || st === "morto") 
+                          ? "<span class='flag flag-status'>💀</span>" 
+                          : "<span class='flag flag-status'>❔</span>");
+      }
+      
+      // Flag para acordo assinado
+      const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim") 
+                           ? "<span class='flag flag-acordo'>📝</span>" 
+                           : "<span class='flag flag-acordo'>❌</span>";
+      
+      flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
+    } else {
+      nome = parte;
+    }
+    
+    li.innerHTML = nome + flagsHTML;
     li.addEventListener("click", () => abrirModalParte(parte, index));
     detPartesList.appendChild(li);
   });
@@ -178,7 +224,7 @@ function carregarPartes(partes) {
 
 function abrirModalParte(parte, index) {
   parteDetailsContainer.innerHTML = `
-    <h3>Detalhes da Parte - ${ (typeof parte === "object") ? parte.nome : parte }</h3>
+    <h3>Detalhes da Parte - ${(typeof parte === "object") ? parte.nome : parte}</h3>
     <label>Telefone: <input type="text" class="parte-telefone" value="${parte.telefone || ''}" data-index="${index}" /></label>
     <label>Email: <input type="text" class="parte-email" value="${parte.email || ''}" data-index="${index}" /></label>
     <label>Contato: 
@@ -193,7 +239,7 @@ function abrirModalParte(parte, index) {
         <option value="falecido" ${(parte.status === "falecido") ? "selected" : ""}>Falecido</option>
       </select>
     </label>
-    <div class="parte-herdeiros ${parte.status === "falecido" ? "" : "hidden"}">
+    <div class="parte-herdeiros ${(parte.status === "falecido") ? "" : "hidden"}">
       <label>Herdeiros: <input type="text" class="parte-herdeiros-input" value="${parte.herdeiros || ''}" data-index="${index}" /></label>
     </div>
     <label>Assinou Acordo:
@@ -210,7 +256,7 @@ function abrirModalParte(parte, index) {
   const selectStatus = parteDetailsContainer.querySelector(".parte-status");
   selectStatus.addEventListener("change", (e) => {
     const herdeirosDiv = parteDetailsContainer.querySelector(".parte-herdeiros");
-    if(e.target.value === "falecido"){
+    if (e.target.value === "falecido") {
       herdeirosDiv.classList.remove("hidden");
     } else {
       herdeirosDiv.classList.add("hidden");
@@ -299,14 +345,14 @@ enviarAndamento.addEventListener("click", async () => {
   carregarDetalhes(currentDocId);
 });
 
-// Alternar entre abas
+// Alternar entre abas (se houver)
 tabs.forEach(tab => {
   tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     const target = tab.dataset.tab;
     tabPanels.forEach(panel => {
-      if(panel.id === target + "-tab"){
+      if (panel.id === target + "-tab") {
         panel.classList.add("active");
       } else {
         panel.classList.remove("active");
@@ -322,7 +368,7 @@ modalClose.addEventListener("click", () => {
 
 // Fechar modal ao clicar fora do conteúdo
 window.addEventListener("click", (e) => {
-  if(e.target === modal){
+  if (e.target === modal) {
     modal.classList.add("hidden");
   }
 });
