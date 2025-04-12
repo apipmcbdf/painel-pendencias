@@ -258,3 +258,23 @@ button:hover {
   margin-left: 4px;
   font-size: 0.9em;
 }
+
+/* Estilo para herdeiros no modal */
+.herdeiro-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.herdeiro-row input.herdeiro-name {
+  flex: 1;
+}
+
+.herdeiro-row button {
+  background-color: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: red;
+}
