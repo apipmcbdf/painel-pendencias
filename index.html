@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="script.js"></script>
 </head>
 <body>
   <!-- Tela de Login -->
@@ -103,6 +102,577 @@
     </div>
   </div>
 
-  
+  <script>
+    console.log("✅ Script carregado");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
+      authDomain: "painel-pendencias.firebaseapp.com",
+      projectId: "painel-pendencias",
+      storageBucket: "painel-pendencias.firebasestorage.app",
+      messagingSenderId: "969369108934",
+      appId: "1:969369108934:web:88c5ac5a8acd987509f2c7"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentDocId = null;
+    const originalValues = {};
+
+    // Mapeamento entre número de processo e link da pasta no Google Drive
+    const driveLinksPorProcesso = {
+      "0067270-02.2016.4.01.3400": "https://drive.google.com/drive/folders/1OY-83t2ueP4AZvAylFOWlV9dWDxAXFJ8?usp=drive_link",
+      "0067273-54.2016.4.01.3400": "https://drive.google.com/drive/folders/1hGOIsKXMMRCAWnQ1SARiKm6QvyXgPkBY?usp=sharing",
+      "1010657-37.2019.4.01.3400": "https://drive.google.com/drive/folders/1z3Zoxh6d1-x2lWxkHgDbBTCofoThOAy6?usp=sharing",
+      "1013014-87.2019.4.01.3400": "https://drive.google.com/drive/folders/1KRoS7eVNPhk2KtpbB9HtxnaIqAoyaChS?usp=sharing",
+      "1013785-31.2020.4.01.3400": "https://drive.google.com/drive/folders/1hHkKmbSrGRwS_JiHpZ0LEcUfsjPq2Teh?usp=sharing",
+      "1019563-16.2019.4.01.3400": "https://drive.google.com/drive/folders/1P-JfEI-yvmvllrlMJtPVKkuh4h-OgeVs?usp=sharing",
+      "1021826-45.2024.4.01.3400": "https://drive.google.com/drive/folders/1hGh9QLUoVj7x5fZrFcZyxruzozy1r3Ng?usp=sharing",
+      "1066615-71.2020.4.01.3400": "https://drive.google.com/drive/folders/1I8-EtZFSdwzGsOKvOg638fRW2qOVMISZ?usp=sharing",
+      "1080504-58.2021.4.01.3400": "https://drive.google.com/drive/folders/1LS_ao5pTAnbBuArL0Pnp63DY510pFAI9?usp=sharing",
+      "1111756-11.4.01.3400": "https://drive.google.com/drive/folders/1hHVZGiY7Y9VCpmiGOJoFxA5XZYWZGgH1?usp=sharing"
+    };
+
+    const nomesPorEmail = {
+      "advogada1@teste.com": "ADVOGADA TESTE",
+      "yasmim.ribeiro@apipmcbdf.com.br": "YASMIM",
+      "marcelledias.adv@gmail.com": "DRA MARCELLE",
+      "grazielasuelimenini2@gmail.com": "DRA GRAZIELA"
+    };
+
+    const loginBtn = document.getElementById("login-btn");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginScreen = document.getElementById("login-screen");
+    const dashboard = document.getElementById("dashboard");
+    const loginError = document.getElementById("login-error");
+
+    const pendenciasList = document.getElementById("pendencias-list");
+    const detalhesSection = document.getElementById("detalhes-section");
+    const salvarBtn = document.getElementById("salvar-btn");
+    const salvarMsg = document.getElementById("salvar-msg");
+
+    const novoAndamento = document.getElementById("novo-andamento");
+    const enviarAndamento = document.getElementById("enviar-andamento");
+    const andamentosList = document.getElementById("andamentos-list");
+    const detPartesList = document.getElementById("det-partes-list");
+
+    // Modal para exibir detalhes da Parte
+    const modal = document.getElementById("modal");
+    const modalClose = document.querySelector(".modal .close");
+    const parteDetailsContainer = document.getElementById("parte-details-container");
+
+    // Abas
+    const tabs = document.querySelectorAll(".tab");
+    const tabPanels = document.querySelectorAll(".tab-panel");
+
+    loginBtn.addEventListener("click", async () => {
+      console.log("🔐 Botão de login clicado");
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        loginError.textContent = "Preencha todos os campos.";
+        return;
+      }
+
+      try {
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        console.log("✅ Login bem-sucedido:", result.user.email);
+        loginScreen.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+        carregarPendencias();
+      } catch (err) {
+        console.error("❌ Erro ao fazer login:", err.message);
+        loginError.textContent = "Usuário ou senha inválidos.";
+      }
+    });
+
+    function calcularDiasRestantes(prazo) {
+      const hoje = new Date();
+      const dataPrazo = new Date(prazo);
+      const diff = Math.ceil((dataPrazo - hoje) / (1000 * 60 * 60 * 24));
+      return diff;
+    }
+
+    async function carregarPendencias() {
+      pendenciasList.innerHTML = "";
+      const snapshot = await db.collection("pendencias").get();
+      const grupos = {};
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const descricao = data.descricao;
+        if (!grupos[descricao]) {
+          grupos[descricao] = [];
+        }
+        grupos[descricao].push({ id: doc.id, data });
+      });
+
+      for (const descricao in grupos) {
+        const grupoContainer = document.createElement("div");
+        grupoContainer.className = "grupo-descricao";
+
+        const header = document.createElement("h4");
+        header.textContent = descricao;
+        header.addEventListener("click", () => {
+          const ul = grupoContainer.querySelector("ul");
+          ul.style.display = ul.style.display === "none" ? "block" : "none";
+        });
+        grupoContainer.appendChild(header);
+
+        const ul = document.createElement("ul");
+        ul.style.display = "none";
+        grupos[descricao].forEach(item => {
+          const { data } = item;
+          const li = document.createElement("li");
+          if (data.status === "resolvido") {
+            li.textContent = `${data.processo} (Resolvido)`;
+            li.style.color = "green";
+          } else {
+            const diasRestantes = calcularDiasRestantes(data.prazo);
+            let info = `${data.processo} `;
+            if (diasRestantes >= 0) info += `(faltam ${diasRestantes} dias)`;
+            else info += `(vencido)`;
+            li.textContent = info;
+            if (diasRestantes < 7) {
+              li.style.color = "red";
+            }
+          }
+          li.addEventListener("click", () => carregarDetalhes(item.id));
+          ul.appendChild(li);
+        });
+        grupoContainer.appendChild(ul);
+        pendenciasList.appendChild(grupoContainer);
+      }
+    }
+
+    async function carregarDetalhes(docId) {
+      const doc = await db.collection("pendencias").doc(docId).get();
+      if (!doc.exists) return;
+      const data = doc.data();
+      currentDocId = docId;
+      salvarMsg.textContent = "";
+      detalhesSection.classList.remove("hidden");
+
+      // Exibe o número do processo e, se houver um link, adiciona o hyperlink
+      const processoElement = document.getElementById("det-processo-text");
+      const processoNumber = data.processo;
+      if (driveLinksPorProcesso[processoNumber]) {
+        processoElement.innerHTML = processoNumber +
+          ' <a href="' + driveLinksPorProcesso[processoNumber] + '" target="_blank">📁 Ver pasta</a>';
+      } else {
+        processoElement.textContent = processoNumber;
+      }
+
+      document.getElementById("det-descricao-text").textContent = data.descricao;
+      document.getElementById("det-data-inicial-text").textContent = new Date(data.data_inicial).toISOString().split("T")[0];
+      document.getElementById("det-prazo-text").textContent = new Date(data.prazo).toISOString().split("T")[0];
+
+      document.getElementById("det-status").value = data.status || "pendente";
+      originalValues["det-status"] = data.status || "pendente";
+
+      document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
+      document.getElementById("det-comentarios").value = data.comentarios || "";
+      originalValues["det-comentarios"] = data.comentarios || "";
+
+      carregarAndamentos(data.andamentos || []);
+      carregarPartes(data.partes || []);
+    }
+
+    function carregarAndamentos(lista) {
+      andamentosList.innerHTML = "";
+      lista.forEach(and => {
+        const div = document.createElement("div");
+        div.className = "andamento-item";
+        div.innerHTML = `
+          <p>${and.texto}</p>
+          <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
+        `;
+        andamentosList.appendChild(div);
+      });
+    }
+
+    // FUNÇÃO MODIFICADA: Renderiza “Partes” e, se a parte estiver falecida, exibe os herdeiros aninhados.
+    function carregarPartes(partes) {
+      detPartesList.innerHTML = "";
+      partes.forEach((parte, index) => {
+        const li = document.createElement("li");
+        let nome;
+        let flagsHTML = "";
+
+        if (typeof parte === "object") {
+          nome = parte.nome;
+
+          // Se a parte estiver falecida (ou morto), mostra o ícone de falecimento
+          if (parte.status && (parte.status.toLowerCase() === "falecido" || parte.status.toLowerCase() === "morto")) {
+            flagsHTML = "<span class='flag flag-status'>💀</span>";
+          } else {
+            // Caso a parte esteja viva, exibe flags de contato, status e acordo
+            const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim") 
+                                  ? "<span class='flag flag-contato'>✅</span>" 
+                                  : "<span class='flag flag-contato'>❌</span>";
+            let statusFlag = "<span class='flag flag-status'>❔</span>";
+            if (parte.status) {
+              const st = parte.status.toLowerCase();
+              statusFlag = (st === "vivo") 
+                            ? "<span class='flag flag-status'>🙂</span>" 
+                            : "<span class='flag flag-status'>❔</span>";
+            }
+            const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim") 
+                                ? "<span class='flag flag-acordo'>📝</span>" 
+                                : "<span class='flag flag-acordo'>❌</span>";
+            flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
+          }
+        } else {
+          nome = parte;
+        }
+
+        li.innerHTML = nome + flagsHTML;
+
+        // Se a parte estiver falecida e houver herdeiros, cria uma lista aninhada com os nomes dos herdeiros.
+        if (
+          typeof parte === "object" &&
+          parte.status &&
+          (parte.status.toLowerCase() === "falecido" || parte.status.toLowerCase() === "morto") &&
+          Array.isArray(parte.herdeiros) &&
+          parte.herdeiros.length > 0
+        ) {
+          let herdeirosUL = document.createElement("ul");
+          herdeirosUL.classList.add("herdeiros-list");
+          parte.herdeiros.forEach(herdeiro => {
+            let liHerdeiro = document.createElement("li");
+            let herdeiroNome = "";
+            let herdeiroFlag = "";
+            if (typeof herdeiro === "object") {
+              herdeiroNome = herdeiro.nome;
+              herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "📝" : "❌";
+            } else {
+              herdeiroNome = herdeiro;
+            }
+            liHerdeiro.innerHTML = herdeiroNome + " " + herdeiroFlag;
+            herdeirosUL.appendChild(liHerdeiro);
+          });
+          li.appendChild(herdeirosUL);
+        }
+
+        li.addEventListener("click", () => abrirModalParte(parte, index));
+        detPartesList.appendChild(li);
+      });
+    }
+
+    function abrirModalParte(parte, index) {
+      // Aqui a implementação do modal para edição dos detalhes da parte permanece semelhante.
+      parteDetailsContainer.innerHTML = "";
+      
+      const title = document.createElement("h3");
+      title.textContent = "Detalhes da Parte - " + ((typeof parte === "object") ? parte.nome : parte);
+      parteDetailsContainer.appendChild(title);
+      
+      // Exemplo com campos para edição – você pode personalizar conforme necessário
+      const statusLabel = document.createElement("label");
+      statusLabel.textContent = "Status: ";
+      const statusSelect = document.createElement("select");
+      statusSelect.className = "parte-status";
+      statusSelect.dataset.index = index;
+      const optionVivo = document.createElement("option");
+      optionVivo.value = "vivo";
+      optionVivo.textContent = "Vivo";
+      const optionFalecido = document.createElement("option");
+      optionFalecido.value = "falecido";
+      optionFalecido.textContent = "Falecido";
+      let initialStatus = (parte.status) ? parte.status.toLowerCase() : "vivo";
+      optionVivo.selected = (initialStatus === "vivo");
+      optionFalecido.selected = (initialStatus === "falecido");
+      statusSelect.appendChild(optionVivo);
+      statusSelect.appendChild(optionFalecido);
+      statusLabel.appendChild(statusSelect);
+      parteDetailsContainer.appendChild(statusLabel);
+      
+      // Container para campos adicionais dinâmicos
+      const additionalContainer = document.createElement("div");
+      additionalContainer.id = "additional-fields";
+      parteDetailsContainer.appendChild(additionalContainer);
+      
+      function renderAdditionalFields() {
+        additionalContainer.innerHTML = "";
+        const statusValue = statusSelect.value;
+        if (statusValue === "vivo") {
+          // Campos para "Vivo": Telefone, Email, Contato e, se "sim", Assinou Acordo
+          const telefoneLabel = document.createElement("label");
+          telefoneLabel.textContent = "Telefone: ";
+          const telefoneInput = document.createElement("input");
+          telefoneInput.type = "text";
+          telefoneInput.className = "parte-telefone";
+          telefoneInput.value = (parte.telefone ? parte.telefone : "");
+          telefoneLabel.appendChild(telefoneInput);
+          additionalContainer.appendChild(telefoneLabel);
+          
+          const emailLabel = document.createElement("label");
+          emailLabel.textContent = "Email: ";
+          const emailInput = document.createElement("input");
+          emailInput.type = "text";
+          emailInput.className = "parte-email";
+          emailInput.value = (parte.email ? parte.email : "");
+          emailLabel.appendChild(emailInput);
+          additionalContainer.appendChild(emailLabel);
+          
+          const contatoLabel = document.createElement("label");
+          contatoLabel.textContent = "Contato: ";
+          const contatoSelect = document.createElement("select");
+          contatoSelect.className = "parte-contato";
+          const optionSim = document.createElement("option");
+          optionSim.value = "sim";
+          optionSim.textContent = "Sim";
+          const optionNao = document.createElement("option");
+          optionNao.value = "não";
+          optionNao.textContent = "Não";
+          contatoSelect.appendChild(optionSim);
+          contatoSelect.appendChild(optionNao);
+          let initialContato = (parte.contato) ? parte.contato.toLowerCase() : "não";
+          contatoSelect.value = initialContato;
+          contatoLabel.appendChild(contatoSelect);
+          additionalContainer.appendChild(contatoLabel);
+          
+          // Campo "Assinou Acordo" – aparece se Contato for "sim"
+          const acordoContainer = document.createElement("div");
+          acordoContainer.id = "acordo-container";
+          acordoContainer.style.display = (contatoSelect.value === "sim") ? "block" : "none";
+          const acordoLabel = document.createElement("label");
+          acordoLabel.textContent = "Assinou Acordo: ";
+          const acordoSelect = document.createElement("select");
+          acordoSelect.className = "parte-assinou";
+          const acOptionSim = document.createElement("option");
+          acOptionSim.value = "sim";
+          acOptionSim.textContent = "Sim";
+          const acOptionNao = document.createElement("option");
+          acOptionNao.value = "não";
+          acOptionNao.textContent = "Não";
+          acordoSelect.appendChild(acOptionSim);
+          acordoSelect.appendChild(acOptionNao);
+          acordoSelect.value = (parte.assinou) ? parte.assinou.toLowerCase() : "não";
+          acordoLabel.appendChild(acordoSelect);
+          acordoContainer.appendChild(acordoLabel);
+          additionalContainer.appendChild(acordoContainer);
+          
+          contatoSelect.addEventListener("change", function() {
+            if (contatoSelect.value === "sim") {
+              acordoContainer.style.display = "block";
+            } else {
+              acordoContainer.style.display = "none";
+            }
+          });
+          
+        } else if (statusValue === "falecido") {
+          // Campos para "Falecido": Herdeiros com opção para adicionar linhas
+          const herdeirosContainer = document.createElement("div");
+          herdeirosContainer.id = "herdeiros-container";
+          const herdeirosLabel = document.createElement("label");
+          herdeirosLabel.textContent = "Herdeiros:";
+          herdeirosContainer.appendChild(herdeirosLabel);
+          const herdeirosList = document.createElement("div");
+          herdeirosList.id = "herdeiros-list-modal";
+          herdeirosContainer.appendChild(herdeirosList);
+          
+          let herdeirosData = [];
+          if (parte.herdeiros && Array.isArray(parte.herdeiros)) {
+            herdeirosData = parte.herdeiros;
+          } else if (typeof parte.herdeiros === "string" && parte.herdeiros.trim() !== "") {
+            herdeirosData = [parte.herdeiros];
+          } else {
+            herdeirosData = [""];
+          }
+          
+          function addHerdeiroRow(value = "", assinou = "não") {
+            const row = document.createElement("div");
+            row.className = "herdeiro-row";
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "herdeiro-name";
+            input.value = value;
+            const assinouCheckbox = document.createElement("input");
+            assinouCheckbox.type = "checkbox";
+            assinouCheckbox.className = "herdeiro-assinou";
+            assinouCheckbox.checked = (assinou === "sim");
+            const checkboxLabel = document.createElement("label");
+            checkboxLabel.textContent = "Assinou?";
+            checkboxLabel.prepend(assinouCheckbox);
+            row.appendChild(input);
+            row.appendChild(checkboxLabel);
+            if (herdeirosList.children.length > 0) {
+              const removeBtn = document.createElement("button");
+              removeBtn.type = "button";
+              removeBtn.textContent = "−";
+              removeBtn.addEventListener("click", function() {
+                herdeirosList.removeChild(row);
+              });
+              row.appendChild(removeBtn);
+            }
+            herdeirosList.appendChild(row);
+          }
+          
+          herdeirosData.forEach(function(item) {
+            if (typeof item === "object") {
+              addHerdeiroRow(item.nome || "", item.assinou || "não");
+            } else {
+              addHerdeiroRow(item, "não");
+            }
+          });
+          
+          const addBtn = document.createElement("button");
+          addBtn.type = "button";
+          addBtn.textContent = "+";
+          addBtn.addEventListener("click", function() {
+            addHerdeiroRow("", "não");
+          });
+          herdeirosContainer.appendChild(addBtn);
+          
+          additionalContainer.appendChild(herdeirosContainer);
+        }
+      }
+      
+      renderAdditionalFields();
+      
+      statusSelect.addEventListener("change", renderAdditionalFields);
+      
+      const salvarBtnModal = document.createElement("button");
+      salvarBtnModal.textContent = "Salvar Parte";
+      salvarBtnModal.className = "parte-salvar";
+      salvarBtnModal.dataset.index = index;
+      parteDetailsContainer.appendChild(salvarBtnModal);
+      
+      salvarBtnModal.addEventListener("click", async function() {
+        const newStatus = statusSelect.value;
+        let updatedPart = { status: newStatus };
+        if (newStatus === "vivo") {
+          updatedPart.telefone = parteDetailsContainer.querySelector(".parte-telefone").value;
+          updatedPart.email = parteDetailsContainer.querySelector(".parte-email").value;
+          updatedPart.contato = parteDetailsContainer.querySelector(".parte-contato").value;
+          if (updatedPart.contato === "sim") {
+            updatedPart.assinou = parteDetailsContainer.querySelector(".parte-assinou").value;
+          } else {
+            updatedPart.assinou = "não";
+          }
+          updatedPart.herdeiros = [];
+        } else if (newStatus === "falecido") {
+          const herdeirosRows = parteDetailsContainer.querySelectorAll(".herdeiro-row");
+          let herdeirosArray = [];
+          herdeirosRows.forEach(row => {
+            const nameInput = row.querySelector(".herdeiro-name");
+            const checkbox = row.querySelector(".herdeiro-assinou");
+            if (nameInput && nameInput.value.trim() !== "") {
+              herdeirosArray.push({
+                nome: nameInput.value.trim(),
+                assinou: checkbox.checked ? "sim" : "não"
+              });
+            }
+          });
+          updatedPart.herdeiros = herdeirosArray;
+          updatedPart.telefone = "";
+          updatedPart.email = "";
+          updatedPart.contato = "";
+          updatedPart.assinou = "";
+        }
+        
+        const docRef = db.collection("pendencias").doc(currentDocId);
+        const docSnap = await docRef.get();
+        let partesArr = docSnap.data().partes;
+        if (!Array.isArray(partesArr)) partesArr = [];
+        const nomeValue = (typeof partesArr[index] === "object" && partesArr[index].nome)
+                          ? partesArr[index].nome
+                          : partesArr[index];
+        updatedPart.nome = nomeValue;
+        
+        partesArr[index] = updatedPart;
+        await docRef.update({ partes: partesArr });
+        alert("Informações da parte atualizadas!");
+        modal.classList.add("hidden");
+        carregarDetalhes(currentDocId);
+      });
+      
+      modal.classList.remove("hidden");
+    }
+
+    // Edição dos comentários
+    document.querySelectorAll(".editar").forEach(botao => {
+      if (botao.dataset.alvo === "det-descricao") return;
+      botao.addEventListener("click", () => {
+        const id = botao.dataset.alvo;
+        const span = document.getElementById(id + "-text");
+        const input = document.getElementById(id);
+
+        if (!input || !span) return;
+
+        if (input.classList.contains("hidden")) {
+          input.classList.remove("hidden");
+          span.classList.add("hidden");
+        } else {
+          input.classList.add("hidden");
+          span.classList.remove("hidden");
+          input.value = originalValues[id];
+        }
+      });
+    });
+
+    salvarBtn.addEventListener("click", async () => {
+      if (!currentDocId) return;
+      const dados = {
+        status: document.getElementById("det-status").value,
+        comentarios: document.getElementById("det-comentarios").value.trim()
+      };
+      await db.collection("pendencias").doc(currentDocId).update(dados);
+      salvarMsg.textContent = "Atualizado com sucesso!";
+      carregarPendencias();
+      carregarDetalhes(currentDocId);
+    });
+
+    enviarAndamento.addEventListener("click", async () => {
+      if (!currentDocId || !novoAndamento.value.trim()) return;
+      const texto = novoAndamento.value.trim();
+      const email = auth.currentUser.email;
+      const autor = nomesPorEmail[email] || email;
+      const dataAndamento = new Date().toISOString();
+
+      const docRef = db.collection("pendencias").doc(currentDocId);
+      const docSnap = await docRef.get();
+      const dados = docSnap.data();
+      const novoArray = dados.andamentos || [];
+      novoArray.push({ texto, autor, data: dataAndamento });
+
+      await docRef.update({ andamentos: novoArray });
+      novoAndamento.value = "";
+      carregarDetalhes(currentDocId);
+    });
+
+    // Alternar entre abas (se houver)
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.dataset.tab;
+        tabPanels.forEach(panel => {
+          if (panel.id === target + "-tab") {
+            panel.classList.add("active");
+          } else {
+            panel.classList.remove("active");
+          }
+        });
+      });
+    });
+
+    // Fechar modal
+    modalClose.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
+
+    // Fechar modal ao clicar fora do conteúdo
+    window.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+      }
+    });
+  </script>
 </body>
 </html>
