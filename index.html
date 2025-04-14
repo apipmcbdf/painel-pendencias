@@ -312,8 +312,8 @@
           } else {
             // Caso a parte esteja viva, exibe flags de contato, status e acordo
             const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim") 
-                                  ? "<span class='flag flag-contato'>📞✅</span>" 
-                                  : "<span class='flag flag-contato'>📞❌</span>";
+                                  ? "<span class='flag flag-contato'>🗣️</span>" 
+                                  : "<span class='flag flag-contato'>📞</span>";
             let statusFlag = "<span class='flag flag-status'>❔</span>";
             if (parte.status) {
               const st = parte.status.toLowerCase();
@@ -323,7 +323,7 @@
             }
             const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim") 
                                 ? "<span class='flag flag-acordo'>📝</span>" 
-                                : "<span class='flag flag-acordo'>📄❌</span>";
+                                : "<span class='flag flag-acordo'>❌</span>";
             flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
           }
         } else {
