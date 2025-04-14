@@ -31,7 +31,10 @@ const driveLinksPorProcesso = {
 };
 
 const nomesPorEmail = {
-  "advogada1@teste.com": "Mario Encanador"
+  "advogada1@teste.com": "ADVOGADA TESTE",
+  "yasmim.ribeiro@apipmcbdf.com.br: "YASMIM",
+  "marcelledias.adv@gmail.com": "DRA MARCELLE",
+  "grazielasuelimenini2@gmail.com": "DRA GRAZIELA"
 };
 
 const loginBtn = document.getElementById("login-btn");
@@ -210,7 +213,7 @@ function carregarPartes(partes) {
         statusFlag = (st === "vivo") 
                       ? "<span class='flag flag-status'>🙂</span>" 
                       : ((st === "falecido" || st === "morto") 
-                          ? "<span class='flag flag-status'>💀</span>" 
+                          ? "<span class='flag flag-status'>🕊️</span>" 
                           : "<span class='flag flag-status'>❔</span>");
       }
       
