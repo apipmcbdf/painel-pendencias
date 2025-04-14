@@ -84,7 +84,7 @@
               <button id="enviar-andamento">Enviar Andamento</button>
             </div>
             <div id="andamentos-list">
-              <!-- Os andamentos serão renderizados aqui pelo script.js -->
+              <!-- Os andamentos serão renderizados aqui -->
             </div>
           </div>
         </section>
@@ -159,7 +159,7 @@
     const andamentosList = document.getElementById("andamentos-list");
     const detPartesList = document.getElementById("det-partes-list");
 
-    // Modal para exibir detalhes da Parte
+    // Modal para exibir os detalhes da Parte
     const modal = document.getElementById("modal");
     const modalClose = document.querySelector(".modal .close");
     const parteDetailsContainer = document.getElementById("parte-details-container");
@@ -195,6 +195,20 @@
       const dataPrazo = new Date(prazo);
       const diff = Math.ceil((dataPrazo - hoje) / (1000 * 60 * 60 * 24));
       return diff;
+    }
+
+    // Função para renderizar andamentos
+    function carregarAndamentos(lista) {
+      andamentosList.innerHTML = "";
+      lista.forEach(and => {
+        const div = document.createElement("div");
+        div.className = "andamento-item";
+        div.innerHTML = `
+          <p>${and.texto}</p>
+          <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
+        `;
+        andamentosList.appendChild(div);
+      });
     }
 
     async function carregarPendencias() {
@@ -282,8 +296,7 @@
       carregarPartes(data.partes || []);
     }
 
-    // FUNÇÃO ATUALIZADA: Renderiza “Partes” com formatação de cor para 'vivo' (azul), 
-    // 'falecido'/'morto' (vermelho) e mantém sem alteração os demais.
+    // Renderiza “Partes” com formatação: 'vivo' em azul, 'falecido' ou 'morto' em vermelho e os demais sem alteração.
     function carregarPartes(partes) {
       detPartesList.innerHTML = "";
       partes.forEach((parte, index) => {
@@ -291,7 +304,7 @@
         let nomeDisplay = "";
         let flagsHTML = "";
 
-        // Se a parte for um objeto com propriedade "nome"
+        // Caso a parte seja um objeto com a propriedade "nome"
         if (parte && typeof parte === "object" && parte.hasOwnProperty("nome")) {
           const status = parte.status ? parte.status.toLowerCase() : "";
           if (status === "falecido" || status === "morto") {
@@ -310,7 +323,6 @@
               flagsHTML = `${contatoFlag} ${acordoFlag}`;
             }
           } else {
-            // Caso haja status mas não seja "vivo", "falecido" ou "morto"
             nomeDisplay = parte.nome;
             if (parte.assinou && parte.assinou.toLowerCase() === "sim") {
               flagsHTML = `<span class="flag flag-acordo">✍️</span>`;
@@ -325,13 +337,12 @@
             }
           }
         } else if (typeof parte === "string") {
-          // Se a parte for apenas uma string
           nomeDisplay = parte;
         }
 
         li.innerHTML = nomeDisplay + " " + flagsHTML;
 
-        // Se for objeto, com status falecido/morto e possuir herdeiros, adiciona a lista aninhada
+        // Se for objeto com status "falecido"/"morto" e tiver herdeiros, adiciona uma lista aninhada
         if (
           parte &&
           typeof parte === "object" &&
@@ -369,7 +380,7 @@
       title.textContent = "Detalhes da Parte - " + ((typeof parte === "object") ? parte.nome : parte);
       parteDetailsContainer.appendChild(title);
       
-      // Exemplo com campos para edição – personalizável conforme necessário
+      // Exemplo de campos para edição
       const statusLabel = document.createElement("label");
       statusLabel.textContent = "Status: ";
       const statusSelect = document.createElement("select");
@@ -398,7 +409,6 @@
         additionalContainer.innerHTML = "";
         const statusValue = statusSelect.value;
         if (statusValue === "vivo") {
-          // Campos para "Vivo": Telefone, Email, Contato e, se "sim", Assinou Acordo
           const telefoneLabel = document.createElement("label");
           telefoneLabel.textContent = "Telefone: ";
           const telefoneInput = document.createElement("input");
@@ -434,7 +444,6 @@
           contatoLabel.appendChild(contatoSelect);
           additionalContainer.appendChild(contatoLabel);
           
-          // Campo "Assinou Acordo" – aparece se Contato for "sim"
           const acordoContainer = document.createElement("div");
           acordoContainer.id = "acordo-container";
           acordoContainer.style.display = (contatoSelect.value === "sim") ? "block" : "none";
@@ -464,7 +473,6 @@
           });
           
         } else if (statusValue === "falecido") {
-          // Campos para "Falecido": Herdeiros com opção para adicionar linhas
           const herdeirosContainer = document.createElement("div");
           herdeirosContainer.id = "herdeiros-container";
           const herdeirosLabel = document.createElement("label");
