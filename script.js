@@ -202,25 +202,25 @@ function carregarPartes(partes) {
       nome = parte.nome;
       
       // Flag para contato
-      const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim") 
-                            ? "<span class='flag flag-contato' title="Contato realizado">📞✅</span title="Contato realizado">" 
-                            : "<span class='flag flag-contato' title="Sem contato">📞❌</span title="Sem contato">";
+      const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim")
+                            ? '<span class="flag flag-contato" title="Contato realizado">📞✅</span>'
+                            : '<span class="flag flag-contato" title="Sem contato">📞❌</span>';
       
-      // Flag para status (vivo ou falecido/morto)
-      let statusFlag = "<span class='flag flag-status' title="Status desconhecido">❓</span title="Status desconhecido">";
+      // Flag para status (vivo ou falecido)
+      let statusFlag = '<span class="flag flag-status" title="Status desconhecido">❓</span>';
       if (parte.status) {
         const st = parte.status.toLowerCase();
-        statusFlag = (st === "vivo") 
-                      ? "<span class='flag flag-status' title="Vivo">🟢</span title="Vivo">" 
-                      : ((st === "falecido" || st === "morto") 
-                          ? "<span class='flag flag-status'>🕊️</span>" 
-                          : "<span class='flag flag-status' title="Status desconhecido">❓</span title="Status desconhecido">");
+        statusFlag = (st === "vivo")
+                      ? '<span class="flag flag-status" title="Vivo">🟢</span>'
+                      : ((st === "falecido" || st === "morto")
+                          ? '<span class="flag flag-status" title="Falecido">🕊️</span>'
+                          : '<span class="flag flag-status" title="Status desconhecido">❓</span>');
       }
       
       // Flag para acordo assinado
-      const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim") 
-                           ? "<span class='flag flag-acordo' title="Assinou o acordo">📝</span title="Assinou o acordo">" 
-                           : "<span class='flag flag-acordo' title="Não assinou o acordo">📄❌</span title="Não assinou o acordo">";
+      const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim")
+                           ? '<span class="flag flag-acordo" title="Assinou o acordo">📝</span>'
+                           : '<span class="flag flag-acordo" title="Não assinou o acordo">📄❌</span>';
       
       flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
     } else {
