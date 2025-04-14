@@ -259,6 +259,18 @@ button:hover {
   font-size: 0.9em;
 }
 
+/* Estilo para herdeiros na listagem de Partes */
+.herdeiros-list {
+  list-style: disc;
+  margin-left: 20px;
+  padding-left: 10px;
+}
+
+.herdeiros-list li {
+  font-size: 0.9em;
+  margin-top: 4px;
+}
+
 /* Estilo para herdeiros no modal */
 .herdeiro-row {
   display: flex;
