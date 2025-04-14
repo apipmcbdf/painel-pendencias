@@ -310,21 +310,26 @@
           if (parte.status && (parte.status.toLowerCase() === "falecido" || parte.status.toLowerCase() === "morto")) {
             flagsHTML = "<span class='flag flag-status'>🔴</span>";
           } else {
-            // Caso a parte esteja viva, exibe flags de contato, status e acordo
-            const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim") 
-                                  ? "<span class='flag flag-contato'>🗣️</span>" 
-                                  : "<span class='flag flag-contato'>📞</span>";
-            let statusFlag = "<span class='flag flag-status'>❔</span>";
-            if (parte.status) {
-              const st = parte.status.toLowerCase();
-              statusFlag = (st === "vivo") 
-                            ? "<span class='flag flag-status'>🟢</span>" 
-                            : "<span class='flag flag-status'>❓</span>";
+            // Se "Assinou Acordo" for "Sim", exibe apenas os emojis de Vivo e de Que assinou
+            if (parte.assinou && parte.assinou.toLowerCase() === "sim") {
+              flagsHTML = "<span class='flag flag-status'>🟢</span> <span class='flag flag-acordo'>📝</span>";
+            } else {
+              // Caso a parte esteja viva, exibe flags de contato, status e acordo conforme a lógica atual
+              const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim")
+                                    ? "<span class='flag flag-contato'>🗣️</span>"
+                                    : "<span class='flag flag-contato'>📞</span>";
+              let statusFlag = "<span class='flag flag-status'>❔</span>";
+              if (parte.status) {
+                const st = parte.status.toLowerCase();
+                statusFlag = (st === "vivo")
+                              ? "<span class='flag flag-status'>🟢</span>"
+                              : "<span class='flag flag-status'>❓</span>";
+              }
+              const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim")
+                                    ? "<span class='flag flag-acordo'>📝</span>"
+                                    : "<span class='flag flag-acordo'>❌</span>";
+              flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
             }
-            const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim") 
-                                ? "<span class='flag flag-acordo'>📝</span>" 
-                                : "<span class='flag flag-acordo'>❌</span>";
-            flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
           }
         } else {
           nome = parte;
