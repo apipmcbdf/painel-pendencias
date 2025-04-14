@@ -282,20 +282,7 @@
       carregarPartes(data.partes || []);
     }
 
-    function carregarAndamentos(lista) {
-      andamentosList.innerHTML = "";
-      lista.forEach(and => {
-        const div = document.createElement("div");
-        div.className = "andamento-item";
-        div.innerHTML = `
-          <p>${and.texto}</p>
-          <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
-        `;
-        andamentosList.appendChild(div);
-      });
-    }
-
-    // FUNÇÃO MODIFICADA: Renderiza “Partes” com a alteração de estilo para falecidos.
+    // FUNÇÃO MODIFICADA: Renderiza “Partes” com a alteração de estilo para falecidos e vivos.
     function carregarPartes(partes) {
       detPartesList.innerHTML = "";
       partes.forEach((parte, index) => {
@@ -304,15 +291,44 @@
 
         if (typeof parte === "object") {
           nome = parte.nome;
-          // Se a parte estiver falecida (ou morto), exibe o nome em vermelho e não adiciona emoji de status
-          if (parte.status && (parte.status.toLowerCase() === "falecido" || parte.status.toLowerCase() === "morto")) {
-            nome = "<span style='color: red;'>" + nome + "</span>";
+          if (parte.status) {
+            const lowerStatus = parte.status.toLowerCase();
+            if (lowerStatus === "falecido" || lowerStatus === "morto") {
+              // Se a pessoa está falecida/morta, exibe o nome em vermelho e não adiciona emojis
+              nome = "<span style='color: red;'>" + nome + "</span>";
+            } else if (lowerStatus === "vivo") {
+              // Se a pessoa está viva, exibe o nome em azul e aplica a lógica de flags
+              nome = "<span style='color: blue;'>" + nome + "</span>";
+              if (parte.assinou && parte.assinou.toLowerCase() === "sim") {
+                flagsHTML = "<span class='flag flag-acordo'>✍️</span>";
+              } else {
+                const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim")
+                                      ? "<span class='flag flag-contato'>🗣️</span>"
+                                      : "<span class='flag flag-contato'>📞</span>";
+                const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim")
+                                      ? "<span class='flag flag-acordo'>✍️</span>"
+                                      : "<span class='flag flag-acordo'>📄</span>";
+                flagsHTML = `${contatoFlag} ${acordoFlag}`;
+              }
+            } else {
+              // Se o status estiver definido mas não for "vivo", "falecido" ou "morto", não altera a cor (fica preta)
+              if (parte.assinou && parte.assinou.toLowerCase() === "sim") {
+                flagsHTML = "<span class='flag flag-acordo'>✍️</span>";
+              } else {
+                const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim")
+                                      ? "<span class='flag flag-contato'>🗣️</span>"
+                                      : "<span class='flag flag-contato'>📞</span>";
+                const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim")
+                                      ? "<span class='flag flag-acordo'>✍️</span>"
+                                      : "<span class='flag flag-acordo'>📄</span>";
+                flagsHTML = `${contatoFlag} ${acordoFlag}`;
+              }
+            }
           } else {
-            // Para partes vivas: se “Assinou Acordo” for “Sim”, exibe apenas o emoji de que assinou
+            // Se não houver status, mantemos o nome sem formatação e processamos os emojis
             if (parte.assinou && parte.assinou.toLowerCase() === "sim") {
               flagsHTML = "<span class='flag flag-acordo'>✍️</span>";
             } else {
-              // Caso contrário, exibe os indicadores de contato e o status de assinatura conforme a lógica atual
               const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim")
                                     ? "<span class='flag flag-contato'>🗣️</span>"
                                     : "<span class='flag flag-contato'>📞</span>";
