@@ -32,7 +32,7 @@ const driveLinksPorProcesso = {
 
 const nomesPorEmail = {
   "advogada1@teste.com": "ADVOGADA TESTE",
-  "yasmim.ribeiro@apipmcbdf.com.br: "YASMIM",
+  "yasmim.ribeiro@apipmcbdf.com.br": "YASMIM",
   "marcelledias.adv@gmail.com": "DRA MARCELLE",
   "grazielasuelimenini2@gmail.com": "DRA GRAZIELA"
 };
