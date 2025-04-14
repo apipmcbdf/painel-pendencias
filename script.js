@@ -203,24 +203,24 @@ function carregarPartes(partes) {
       
       // Flag para contato
       const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim") 
-                            ? "<span class='flag flag-contato'>✅</span>" 
-                            : "<span class='flag flag-contato'>❌</span>";
+                            ? "<span class='flag flag-contato' title="Contato realizado">📞✅</span title="Contato realizado">" 
+                            : "<span class='flag flag-contato' title="Sem contato">📞❌</span title="Sem contato">";
       
       // Flag para status (vivo ou falecido/morto)
-      let statusFlag = "<span class='flag flag-status'>❔</span>";
+      let statusFlag = "<span class='flag flag-status' title="Status desconhecido">❓</span title="Status desconhecido">";
       if (parte.status) {
         const st = parte.status.toLowerCase();
         statusFlag = (st === "vivo") 
-                      ? "<span class='flag flag-status'>🙂</span>" 
+                      ? "<span class='flag flag-status' title="Vivo">🟢</span title="Vivo">" 
                       : ((st === "falecido" || st === "morto") 
                           ? "<span class='flag flag-status'>🕊️</span>" 
-                          : "<span class='flag flag-status'>❔</span>");
+                          : "<span class='flag flag-status' title="Status desconhecido">❓</span title="Status desconhecido">");
       }
       
       // Flag para acordo assinado
       const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim") 
-                           ? "<span class='flag flag-acordo'>📝</span>" 
-                           : "<span class='flag flag-acordo'>❌</span>";
+                           ? "<span class='flag flag-acordo' title="Assinou o acordo">📝</span title="Assinou o acordo">" 
+                           : "<span class='flag flag-acordo' title="Não assinou o acordo">📄❌</span title="Não assinou o acordo">";
       
       flagsHTML = ` ${contatoFlag} ${statusFlag} ${acordoFlag}`;
     } else {
