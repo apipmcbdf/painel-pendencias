@@ -310,15 +310,15 @@
           } else {
             // Para partes vivas: se “Assinou Acordo” for “Sim”, exibe apenas o emoji de que assinou
             if (parte.assinou && parte.assinou.toLowerCase() === "sim") {
-              flagsHTML = "<span class='flag flag-acordo'>📝</span>";
+              flagsHTML = "<span class='flag flag-acordo'>✍️</span>";
             } else {
               // Caso contrário, exibe os indicadores de contato e o status de assinatura conforme a lógica atual
               const contatoFlag = (parte.contato && parte.contato.toLowerCase() === "sim")
                                     ? "<span class='flag flag-contato'>🗣️</span>"
                                     : "<span class='flag flag-contato'>📞</span>";
               const acordoFlag = (parte.assinou && parte.assinou.toLowerCase() === "sim")
-                                    ? "<span class='flag flag-acordo'>📝✅</span>"
-                                    : "<span class='flag flag-acordo'>❌</span>";
+                                    ? "<span class='flag flag-acordo'>✍️</span>"
+                                    : "<span class='flag flag-acordo'>📄</span>";
               flagsHTML = `${contatoFlag} ${acordoFlag}`;
             }
           }
@@ -344,7 +344,7 @@
             let herdeiroFlag = "";
             if (typeof herdeiro === "object") {
               herdeiroNome = herdeiro.nome;
-              herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "📝✅" : "❌";
+              herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "📄";
             } else {
               herdeiroNome = herdeiro;
             }
