@@ -332,13 +332,9 @@
         let emojis = "";
         if (parte.lp && parte.lp.toLowerCase() === "sim") {
           emojis = " ⚖️🚫";
-        } else if (
-        parte.interesse && parte.interesse.toLowerCase() === "não" &&
-        status !== "falecido" && status !== "morto"
-        ) {
-        emojis = " 🙅‍♂️";
-        }
-        else {
+        } else if (parte.interesse && parte.interesse.toLowerCase() === "não") {
+          emojis = " 🙅‍♂️";
+        } else {
           if (parte.assinou && parte.assinou.toLowerCase() === "sim") emojis += " ✍️";
           if (parte.contato && parte.contato.toLowerCase() === "sim") emojis += " 🗣️";
         }
@@ -347,12 +343,11 @@
           const herdeirosUL = document.createElement("ul");
           herdeirosUL.classList.add("herdeiros-list");
           parte.herdeiros.forEach(herdeiro => {
-          const liHerdeiro = document.createElement("li");
-          if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
-          const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "";
-          liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
-          }
-          else {
+            const liHerdeiro = document.createElement("li");
+            if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
+              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "📄";
+              liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
+            } else {
               liHerdeiro.textContent = herdeiro;
             }
             herdeirosUL.appendChild(liHerdeiro);
@@ -685,26 +680,15 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
           lp: lpValue
         };
         // Dados de vivo
-if (newStatus === "vivo") {
-  updatedPart.telefone = document.querySelector(".parte-telefone")?.value.trim() || "";
-  updatedPart.email = document.querySelector(".parte-email")?.value.trim() || "";
-  updatedPart.contato = contatoSelect?.value || "não";
-  updatedPart.assinou = updatedPart.contato === "sim"
-    ? document.querySelector(".parte-assinou")?.value || "não"
-    : "não";
-  updatedPart.herdeiros = [];
-} else if (newStatus === "falecido") {
-  // Coletar lista de herdeiros
-  const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
-  updatedPart.herdeiros = Array.from(rows).map(row => {
-    return {
-      nome: row.querySelector(".herdeiro-name").value,
-      assinou: row.querySelector(".herdeiro-assinou").value,
-      interesse: row.querySelector(".herdeiro-interesse").value
-    };
-  });
-}
-
+        if (newStatus === "vivo") {
+          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone").value.trim();
+          updatedPart.email = document.querySelector("#additional-fields .parte-email").value.trim();
+          updatedPart.contato = contatoSelect.value;
+          updatedPart.assinou = contatoSelect.value === "sim"
+            ? document.querySelector("#additional-fields .parte-assinou").value
+            : "não";
+          updatedPart.herdeiros = [];
+        } else if (newStatus === "falecido") {
           // Coletar lista de herdeiros
           const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
           updatedPart.herdeiros = Array.from(rows).map(row => {
