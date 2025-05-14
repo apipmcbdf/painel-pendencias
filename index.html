@@ -332,9 +332,9 @@
         let emojis = "";
         if (parte.lp && parte.lp.toLowerCase() === "sim") {
           emojis = " ⚖️🚫";
-        } else if (parte.interesse && parte.interesse.toLowerCase() === "não") {
-          emojis = " 🙅‍♂️";
-        } else {
+        } else if (parte.interesse && parte.interesse.toLowerCase() === "não" && status !== "falecido" && status !== "morto") {
+  emojis = " 🙅‍♂️";
+} else {
           if (parte.assinou && parte.assinou.toLowerCase() === "sim") emojis += " ✍️";
           if (parte.contato && parte.contato.toLowerCase() === "sim") emojis += " 🗣️";
         }
@@ -797,11 +797,7 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
     });
 
     // Fechar modal ao clicar fora do conteúdo
-    window.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-      }
-    });
+    // Fechamento do modal ao clicar fora removido por segurança
   </script>
 </body>
 </html>
