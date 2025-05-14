@@ -685,17 +685,26 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
           lp: lpValue
         };
         // Dados de vivo
-        if (newStatus === "vivo") {
-        updatedPart.telefone = document.querySelector(".parte-telefone")?.value.trim() || "";
-        updatedPart.email = document.querySelector(".parte-email")?.value.trim() || "";
-        updatedPart.contato = contatoSelect?.value || "não";
-        updatedPart.assinou = updatedPart.contato === "sim"
-        ? document.querySelector(".parte-assinou")?.value || "não"
-        : "não";
-        updatedPart.herdeiros = [];
-        }
-          updatedPart.herdeiros = [];
-        } else if (newStatus === "falecido") {
+if (newStatus === "vivo") {
+  updatedPart.telefone = document.querySelector(".parte-telefone")?.value.trim() || "";
+  updatedPart.email = document.querySelector(".parte-email")?.value.trim() || "";
+  updatedPart.contato = contatoSelect?.value || "não";
+  updatedPart.assinou = updatedPart.contato === "sim"
+    ? document.querySelector(".parte-assinou")?.value || "não"
+    : "não";
+  updatedPart.herdeiros = [];
+} else if (newStatus === "falecido") {
+  // Coletar lista de herdeiros
+  const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
+  updatedPart.herdeiros = Array.from(rows).map(row => {
+    return {
+      nome: row.querySelector(".herdeiro-name").value,
+      assinou: row.querySelector(".herdeiro-assinou").value,
+      interesse: row.querySelector(".herdeiro-interesse").value
+    };
+  });
+}
+
           // Coletar lista de herdeiros
           const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
           updatedPart.herdeiros = Array.from(rows).map(row => {
