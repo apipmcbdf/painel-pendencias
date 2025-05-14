@@ -686,12 +686,14 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         };
         // Dados de vivo
         if (newStatus === "vivo") {
-          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone").value.trim();
-          updatedPart.email = document.querySelector("#additional-fields .parte-email").value.trim();
-          updatedPart.contato = contatoSelect.value;
-          updatedPart.assinou = contatoSelect.value === "sim"
-            ? document.querySelector("#additional-fields .parte-assinou").value
-            : "não";
+        updatedPart.telefone = document.querySelector(".parte-telefone")?.value.trim() || "";
+        updatedPart.email = document.querySelector(".parte-email")?.value.trim() || "";
+        updatedPart.contato = contatoSelect?.value || "não";
+        updatedPart.assinou = updatedPart.contato === "sim"
+        ? document.querySelector(".parte-assinou")?.value || "não"
+        : "não";
+        updatedPart.herdeiros = [];
+        }
           updatedPart.herdeiros = [];
         } else if (newStatus === "falecido") {
           // Coletar lista de herdeiros
