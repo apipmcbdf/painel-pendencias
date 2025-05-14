@@ -347,11 +347,12 @@
           const herdeirosUL = document.createElement("ul");
           herdeirosUL.classList.add("herdeiros-list");
           parte.herdeiros.forEach(herdeiro => {
-            const liHerdeiro = document.createElement("li");
-            if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
-              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "📄";
-              liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
-            } else {
+          const liHerdeiro = document.createElement("li");
+          if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
+          const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "";
+          liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
+          }
+          else {
               liHerdeiro.textContent = herdeiro;
             }
             herdeirosUL.appendChild(liHerdeiro);
