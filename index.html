@@ -345,7 +345,7 @@
           parte.herdeiros.forEach(herdeiro => {
             const liHerdeiro = document.createElement("li");
             if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
-              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "📄";
+              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "";
               liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
             } else {
               liHerdeiro.textContent = herdeiro;
