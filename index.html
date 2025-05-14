@@ -332,9 +332,13 @@
         let emojis = "";
         if (parte.lp && parte.lp.toLowerCase() === "sim") {
           emojis = " ⚖️🚫";
-        } else if (parte.interesse && parte.interesse.toLowerCase() === "não") {
-          emojis = " 🙅‍♂️";
-        } else {
+        } else if (
+        parte.interesse && parte.interesse.toLowerCase() === "não" &&
+        status !== "falecido" && status !== "morto"
+        ) {
+        emojis = " 🙅‍♂️";
+        }
+        else {
           if (parte.assinou && parte.assinou.toLowerCase() === "sim") emojis += " ✍️";
           if (parte.contato && parte.contato.toLowerCase() === "sim") emojis += " 🗣️";
         }
