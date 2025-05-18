@@ -121,7 +121,9 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+(async () => {
+
     console.log("✅ Script carregado");
 
     const firebaseConfig = {
@@ -838,6 +840,8 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
-  </script>
+  
+})();
+</script>
 </body>
 </html>
