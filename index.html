@@ -218,18 +218,19 @@
     }
 
     // Função para renderizar andamentos
-    function carregarAndamentos(lista) {
-      andamentosList.innerHTML = "";
-      lista.forEach(and => {
-        const div = document.createElement("div");
-        div.className = "andamento-item";
-        div.innerHTML = `
-          <p>${and.texto}</p>
-          <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
-        `;
-        andamentosList.appendChild(div);
-      });
-    }
+function carregarAndamentos(lista) {
+  andamentosList.innerHTML = "";
+  [...lista].reverse().forEach(and => {
+    const div = document.createElement("div");
+    div.className = "andamento-item";
+    div.style.width = "100%";
+    div.innerHTML = `
+      <p>${and.texto}</p>
+      <small>${and.autor} — ${new Date(and.data).toLocaleString()}</small>
+    `;
+    andamentosList.appendChild(div);
+  });
+}
 
     async function carregarPendencias() {
       pendenciasList.innerHTML = "";
