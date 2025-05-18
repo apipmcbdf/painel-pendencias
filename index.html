@@ -88,7 +88,7 @@
             <p>
               <strong>Comentários:</strong>
               <span id="det-comentarios-text"></span>
-              <textarea id="det-comentarios" class="hidden" rows="5" maxlength="1000" style="resize: vertical; min-height: 100px; max-height: 300px;"></textarea>
+              <textarea id="det-comentarios" class="hidden" rows="3"></textarea>
               <button class="editar" data-alvo="det-comentarios">✎</button>
             </p>
             <button id="salvar-btn">Salvar Alterações</button>
@@ -158,8 +158,7 @@
       "advogada1@teste.com": "ADVOGADA TESTE",
       "yasmim.ribeiro@apipmcbdf.com.br": "YASMIM",
       "marcelledias.adv@gmail.com": "DRA MARCELLE",
-      "grazielasuelimenini2@gmail.com": "DRA GRAZIELA",
-      "cavictor.franco@gmail.com": "VICTOR"
+      "grazielasuelimenini2@gmail.com": "DRA GRAZIELA"
     };
 
     const loginBtn = document.getElementById("login-btn");
@@ -308,8 +307,7 @@
       document.getElementById("det-status").value = data.status || "pendente";
       originalValues["det-status"] = data.status || "pendente";
 
-      document.getElementById("det-comentarios-text").innerHTML = (data.comentarios || "").replace(/
-/g, "<br>");
+      document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
       document.getElementById("det-comentarios").value = data.comentarios || "";
       originalValues["det-comentarios"] = data.comentarios || "";
 
@@ -334,9 +332,9 @@
         let emojis = "";
         if (parte.lp && parte.lp.toLowerCase() === "sim") {
           emojis = " ⚖️🚫";
-        } else if (parte.interesse && parte.interesse.toLowerCase() === "não" && status !== "falecido" && status !== "morto") {
-  emojis = " 🙅‍♂️";
-} else {
+        } else if (parte.interesse && parte.interesse.toLowerCase() === "não") {
+          emojis = " 🙅‍♂️";
+        } else {
           if (parte.assinou && parte.assinou.toLowerCase() === "sim") emojis += " ✍️";
           if (parte.contato && parte.contato.toLowerCase() === "sim") emojis += " 🗣️";
         }
@@ -347,7 +345,7 @@
           parte.herdeiros.forEach(herdeiro => {
             const liHerdeiro = document.createElement("li");
             if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
-              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "";
+              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "📄";
               liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
             } else {
               liHerdeiro.textContent = herdeiro;
@@ -683,11 +681,11 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         };
         // Dados de vivo
         if (newStatus === "vivo") {
-          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone")?.value || "não".trim();
-          updatedPart.email = document.querySelector("#additional-fields .parte-email")?.value || "não".trim();
+          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone").value.trim();
+          updatedPart.email = document.querySelector("#additional-fields .parte-email").value.trim();
           updatedPart.contato = contatoSelect.value;
           updatedPart.assinou = contatoSelect.value === "sim"
-            ? document.querySelector("#additional-fields .parte-assinou")?.value || "não"
+            ? document.querySelector("#additional-fields .parte-assinou").value
             : "não";
           updatedPart.herdeiros = [];
         } else if (newStatus === "falecido") {
@@ -703,9 +701,9 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         }
         // Dados de LP
         if (lpValue === "sim") {
-          updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo")?.value || "não".trim();
-          updatedPart.advogado_lp = document.querySelector(".parte-lp-advogado")?.value || "não".trim();
-          updatedPart.observacoes_lp = document.querySelector(".parte-lp-observacoes")?.value || "não".trim();
+          updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo").value.trim();
+          updatedPart.advogado_lp = document.querySelector(".parte-lp-advogado").value.trim();
+          updatedPart.observacoes_lp = document.querySelector(".parte-lp-observacoes").value.trim();
         }
         // Nome
         updatedPart.nome = typeof parte === "object" ? parte.nome : parte;
@@ -799,7 +797,11 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
     });
 
     // Fechar modal ao clicar fora do conteúdo
-    // Fechamento do modal ao clicar fora removido por segurança
+    window.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+      }
+    });
   </script>
 </body>
 </html>
