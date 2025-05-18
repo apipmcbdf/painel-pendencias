@@ -320,8 +320,6 @@ function carregarAndamentos(lista) {
       originalValues["det-status"] = data.status || "pendente";
 
       document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
-      document.getElementById("det-comentarios").value = data.comentarios || "";
-      originalValues["det-comentarios"] = data.comentarios || "";
 
       carregarAndamentos(data.andamentos || []);
       carregarPartes(data.partes || []);
