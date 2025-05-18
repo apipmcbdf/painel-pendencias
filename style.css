@@ -177,7 +177,7 @@ button:hover { background-color: #0056b3; }
 
 /* Seção "Adicionar Andamento" */
 .andamento-input { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-#andamentos-list { display: flex;.flex-direction: column;gap: 15px; }
+#andamentos-list {   display: flex;   flex-direction: column;   gap: 15px; }
 .andamento-item {
   padding: 15px;
   border: 1px solid #ccc;
