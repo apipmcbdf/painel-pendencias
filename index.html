@@ -121,9 +121,7 @@
     </div>
   </div>
 
-  <script type="module">
-(async () => {
-
+  <script>
     console.log("✅ Script carregado");
 
     const firebaseConfig = {
@@ -674,84 +672,64 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       sb.dataset.index = index; parteDetailsContainer.appendChild(sb);
       
       sb.addEventListener("click", async () => {
-  // 1) Monta o objeto updatedPart com defaults seguros
-  const newStatus     = statusSelect.value;
-  const interesseVal  = interesseSelect.value;
-  const lpVal         = lpSelect.value;
-  let updatedPart     = { status: newStatus, interesse: interesseVal, lp: lpVal };
-
-  // Campos “vivo”
-  if (newStatus === "vivo") {
-    const telEl    = document.querySelector("#additional-fields .parte-telefone");
-    const emailEl  = document.querySelector("#additional-fields .parte-email");
-    const assinEl  = document.querySelector("#additional-fields .parte-assinou");
-    updatedPart.telefone = telEl?.value.trim()    || "";
-    updatedPart.email    = emailEl?.value.trim()  || "";
-    updatedPart.contato  = contatoSelect.value;
-    updatedPart.assinou  = (contatoSelect.value === "sim")
-                           ? (assinEl?.value || "")
-                           : "não";
-    updatedPart.herdeiros = [];
-  }
-  // Campos “falecido”
-  else if (newStatus === "falecido") {
-    const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
-    updatedPart.herdeiros = Array.from(rows).map(row => ({
-      nome:       row.querySelector(".herdeiro-name")?.value || "",
-      assinou:    row.querySelector(".herdeiro-assinou")?.value || "",
-      interesse:  row.querySelector(".herdeiro-interesse")?.value || ""
-    }));
-  }
-
-  // Campos LP, se aplicável
-  if (lpVal === "sim") {
-    updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo")?.value.trim() || "";
-    updatedPart.advogado_lp        = document.querySelector(".parte-lp-advogado")?.value.trim()        || "";
-    updatedPart.observacoes_lp     = document.querySelector(".parte-lp-observacoes")?.value.trim()     || "";
-  }
-
-  // Garante que não há campos undefined em updatedPart
-  Object.keys(updatedPart).forEach(key => {
-    if (updatedPart[key] === undefined) delete updatedPart[key];
-  });
-
-  // 2) Busca o array atual e substitui a parte modificada
-  const docRef = db.collection("pendencias").doc(currentDocId);
-  const docSnap = await docRef.get();
-  let partesArr = docSnap.data().partes || [];
-  partesArr[index] = updatedPart;
-
-  // Limpa undefined em cada parte do array inteiro
-  partesArr = partesArr.map(part => {
-    Object.keys(part).forEach(k => {
-      if (part[k] === undefined) delete part[k];
-    });
-    return part;
-  });
-
-  // 3) Atualiza no Firestore
-  await docRef.update({ partes: partesArr });
-
-  alert("Informações da parte atualizadas!");
-  modal.classList.add("hidden");
-  carregarDetalhes(currentDocId);
-});
+        // 1) Monta o objeto updatedPart com defaults seguros
+        const newStatus     = statusSelect.value;
+        const interesseVal  = interesseSelect.value;
+        const lpVal         = lpSelect.value;
+        let updatedPart     = { status: newStatus, interesse: interesseVal, lp: lpVal };
+      
+        // Campos “vivo”
+        if (newStatus === "vivo") {
+          const telEl    = document.querySelector("#additional-fields .parte-telefone");
+          const emailEl  = document.querySelector("#additional-fields .parte-email");
+          const assinEl  = document.querySelector("#additional-fields .parte-assinou");
+          updatedPart.telefone = telEl?.value.trim()    || "";
+          updatedPart.email    = emailEl?.value.trim()  || "";
+          updatedPart.contato  = contatoSelect.value;
+          updatedPart.assinou  = (contatoSelect.value === "sim")
+                                 ? (assinEl?.value || "")
+                                 : "não";
+          updatedPart.herdeiros = [];
         }
-        // Dados de LP
-        if (lpValue === "sim") {
-          updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo").value.trim();
-          updatedPart.advogado_lp = document.querySelector(".parte-lp-advogado").value.trim();
-          updatedPart.observacoes_lp = document.querySelector(".parte-lp-observacoes").value.trim();
+        // Campos “falecido”
+        else if (newStatus === "falecido") {
+          const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
+          updatedPart.herdeiros = Array.from(rows).map(row => ({
+            nome:       row.querySelector(".herdeiro-name")?.value || "",
+            assinou:    row.querySelector(".herdeiro-assinou")?.value || "",
+            interesse:  row.querySelector(".herdeiro-interesse")?.value || ""
+          }));
         }
-        // Nome
-        updatedPart.nome = typeof parte === "object" ? parte.nome : parte;
-
-        // Atualizar no Firestore
+      
+        // Campos LP, se aplicável
+        if (lpVal === "sim") {
+          updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo")?.value.trim() || "";
+          updatedPart.advogado_lp        = document.querySelector(".parte-lp-advogado")?.value.trim()        || "";
+          updatedPart.observacoes_lp     = document.querySelector(".parte-lp-observacoes")?.value.trim()     || "";
+        }
+      
+        // Garante que não há campos undefined em updatedPart
+        Object.keys(updatedPart).forEach(key => {
+          if (updatedPart[key] === undefined) delete updatedPart[key];
+        });
+      
+        // 2) Busca o array atual e substitui a parte modificada
         const docRef = db.collection("pendencias").doc(currentDocId);
         const docSnap = await docRef.get();
         let partesArr = docSnap.data().partes || [];
         partesArr[index] = updatedPart;
+      
+        // Limpa undefined em cada parte do array inteiro
+        partesArr = partesArr.map(part => {
+          Object.keys(part).forEach(k => {
+            if (part[k] === undefined) delete part[k];
+          });
+          return part;
+        });
+      
+        // 3) Atualiza no Firestore
         await docRef.update({ partes: partesArr });
+      
         alert("Informações da parte atualizadas!");
         modal.classList.add("hidden");
         carregarDetalhes(currentDocId);
@@ -840,8 +818,6 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
-  
-})();
-</script>
+  </script>
 </body>
 </html>
