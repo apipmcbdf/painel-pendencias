@@ -24,30 +24,9 @@
 }
 </style>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
-    document.querySelectorAll(".modal .close").forEach(btn => {
-      btn.addEventListener("click", () => {
-        btn.closest(".modal").classList.add("hidden");
-      });
-    });
-    
-</script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js">
-    document.querySelectorAll(".modal .close").forEach(btn => {
-      btn.addEventListener("click", () => {
-        btn.closest(".modal").classList.add("hidden");
-      });
-    });
-    
-</script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
-    document.querySelectorAll(".modal .close").forEach(btn => {
-      btn.addEventListener("click", () => {
-        btn.closest(".modal").classList.add("hidden");
-      });
-    });
-    
-</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
   <!-- Tela de Login -->
@@ -107,8 +86,8 @@
               </select>
             </p>
             <p>
-  <strong>Comentários:</strong><br>
-  <div><span id="det-comentarios-text" style="white-space: pre-wrap;"></span></div>
+  <strong>Comentários:</strong>
+  <span id="det-comentarios-text"></span>
   <button id="editar-comentarios-btn">✎</button>
 </p>
             <button id="salvar-btn">Salvar Alterações</button>
@@ -832,14 +811,7 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
-  
-    document.querySelectorAll(".modal .close").forEach(btn => {
-      btn.addEventListener("click", () => {
-        btn.closest(".modal").classList.add("hidden");
-      });
-    });
-    
-</script>
+  </script>
 
 <script>
   // Modal de Comentários
@@ -872,13 +844,6 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       carregarDetalhes(currentDocId);
     }
   }
-
-    document.querySelectorAll(".modal .close").forEach(btn => {
-      btn.addEventListener("click", () => {
-        btn.closest(".modal").classList.add("hidden");
-      });
-    });
-    
 </script>
 
 </body>
