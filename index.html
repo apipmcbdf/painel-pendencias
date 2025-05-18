@@ -24,38 +24,7 @@
 }
 </style>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
-    // Modal de Comentários
-    const modalComentarios = document.getElementById("modal-comentarios");
-    const textareaComentarios = document.getElementById("comentarios-editar-textarea");
-    const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
-
-    if (editarComentariosBtn) {
-      editarComentariosBtn.addEventListener("click", () => {
-        const span = document.getElementById("det-comentarios-text");
-        if (span && textareaComentarios) {
-          textareaComentarios.value = span.textContent.trim();
-          modalComentarios.classList.remove("hidden");
-        }
-      });
-    }
-
-    function fecharModalComentarios() {
-      modalComentarios.classList.add("hidden");
-    }
-
-    async function salvarComentarios() {
-      const novoTexto = textareaComentarios.value.trim();
-      document.getElementById("det-comentarios-text").textContent = novoTexto;
-      if (currentDocId) {
-        await db.collection("pendencias").doc(currentDocId).update({ comentarios: novoTexto });
-        salvarMsg.textContent = "Comentários atualizados!";
-        fecharModalComentarios();
-        carregarPendencias();
-      }
-    }
-
-</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
@@ -139,6 +108,8 @@
         </section>
       </main>
     </div>
+  </div>
+
   
   <!-- Modal de Comentários -->
   <div id="modal-comentarios" class="modal hidden">
@@ -149,7 +120,6 @@
       <button onclick="salvarComentarios()">Salvar Alterações</button>
     </div>
   </div>
-
 
   <!-- Modal para exibir os detalhes da Parte -->
   <div id="modal" class="modal hidden">
@@ -350,9 +320,6 @@ function carregarAndamentos(lista) {
       originalValues["det-status"] = data.status || "pendente";
 
       document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
-      document.getElementById("det-comentarios").value = data.comentarios || "";
-      originalValues["det-comentarios"] = data.comentarios || "";
-
       carregarAndamentos(data.andamentos || []);
       carregarPartes(data.partes || []);
     }
@@ -845,5 +812,39 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       }
     });
   </script>
+
+<script>
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  if (editarComentariosBtn) {
+    editarComentariosBtn.addEventListener("click", () => {
+      const span = document.getElementById("det-comentarios-text");
+      if (span && textareaComentarios) {
+        textareaComentarios.value = span.textContent.trim();
+        modalComentarios.classList.remove("hidden");
+      }
+    });
+  }
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({ comentarios: novoTexto });
+      document.getElementById("salvar-msg").textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+      carregarDetalhes(currentDocId);
+    }
+  }
+</script>
+
 </body>
 </html>
