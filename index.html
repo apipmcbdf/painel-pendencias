@@ -679,8 +679,8 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       sb.textContent = "Salvar Parte"; sb.className = "parte-salvar";
       sb.dataset.index = index; parteDetailsContainer.appendChild(sb);
       
+      
       sb.addEventListener("click", async () => {
-        // Montar objeto atualizado
         const newStatus = statusSelect.value;
         const interesseValue = interesseSelect.value;
         const lpValue = lpSelect.value;
@@ -689,25 +689,59 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
           interesse: interesseValue,
           lp: lpValue
         };
-        // Dados de vivo
+        // Dados de vivo com checagem de existência
         if (newStatus === "vivo") {
-          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone").value.trim();
-          updatedPart.email = document.querySelector("#additional-fields .parte-email").value.trim();
+          const telEl = document.querySelector("#additional-fields .parte-telefone");
+          const emailEl = document.querySelector("#additional-fields .parte-email");
+          const assinouEl = document.querySelector("#additional-fields .parte-assinou");
+          updatedPart.telefone = telEl?.value.trim() || "";
+          updatedPart.email = emailEl?.value.trim() || "";
           updatedPart.contato = contatoSelect.value;
-          updatedPart.assinou = contatoSelect.value === "sim"
-            ? document.querySelector("#additional-fields .parte-assinou").value
+          updatedPart.assinou = (contatoSelect.value === "sim")
+            ? (assinouEl?.value || "")
             : "não";
           updatedPart.herdeiros = [];
         } else if (newStatus === "falecido") {
-          // Coletar lista de herdeiros
           const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
-          updatedPart.herdeiros = Array.from(rows).map(row => {
-            return {
-              nome: row.querySelector(".herdeiro-name").value,
-              assinou: row.querySelector(".herdeiro-assinou").value,
-              interesse: row.querySelector(".herdeiro-interesse").value
-            };
+          updatedPart.herdeiros = Array.from(rows).map(row => ({
+            nome: row.querySelector(".herdeiro-name")?.value || "",
+            assinou: row.querySelector(".herdeiro-assinou")?.value || "",
+            interesse: row.querySelector(".herdeiro-interesse")?.value || ""
+          }));
+        }
+        // Campos de LP com checagem
+        if (lpValue === "sim") {
+          const lpNumEl = document.querySelector(".parte-lp-numero-processo");
+          const lpAdvEl = document.querySelector(".parte-lp-advogado");
+          const lpObsEl = document.querySelector(".parte-lp-observacoes");
+          updatedPart.numero_processo_lp = lpNumEl?.value.trim() || "";
+          updatedPart.advogado_lp = lpAdvEl?.value.trim() || "";
+          updatedPart.observacoes_lp = lpObsEl?.value.trim() || "";
+        }
+        // Limpa propriedades undefined
+        Object.keys(updatedPart).forEach(key => {
+          if (updatedPart[key] === undefined) {
+            delete updatedPart[key];
+          }
+        });
+        // Atualizar no Firestore
+        const docRef = db.collection("pendencias").doc(currentDocId);
+        const docSnap = await docRef.get();
+        let partesArr = docSnap.data().partes || [];
+        partesArr[index] = updatedPart;
+        // Limpeza definitiva de undefined
+        partesArr = partesArr.map(part => {
+          Object.keys(part).forEach(k => {
+            if (part[k] === undefined) delete part[k];
           });
+          return part;
+        });
+        await docRef.update({ partes: partesArr });
+        alert("Informações da parte atualizadas!");
+        modal.classList.add("hidden");
+        carregarDetalhes(currentDocId);
+      });
+
         }
         // Dados de LP
         if (lpValue === "sim") {
