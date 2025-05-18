@@ -308,7 +308,8 @@
       document.getElementById("det-status").value = data.status || "pendente";
       originalValues["det-status"] = data.status || "pendente";
 
-      document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
+      document.getElementById("det-comentarios-text").innerHTML = (data.comentarios || "").replace(/
+/g, "<br>");
       document.getElementById("det-comentarios").value = data.comentarios || "";
       originalValues["det-comentarios"] = data.comentarios || "";
 
