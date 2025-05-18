@@ -303,6 +303,9 @@ button:hover { background-color: #0056b3; }
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+
+
 #modal-comentarios textarea {
   font-size: 1rem;
   padding: 10px;
@@ -310,4 +313,3 @@ button:hover { background-color: #0056b3; }
   border: 1px solid #ccc;
   resize: vertical;
 }
-

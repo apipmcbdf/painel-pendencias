@@ -24,21 +24,97 @@
 }
 </style>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  editarComentariosBtn.addEventListener("click", () => {
+    textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
+    modalComentarios.classList.remove("hidden");
+  });
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js">
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  editarComentariosBtn.addEventListener("click", () => {
+    textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
+    modalComentarios.classList.remove("hidden");
+  });
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  editarComentariosBtn.addEventListener("click", () => {
+    textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
+    modalComentarios.classList.remove("hidden");
+  });
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
+
+</script>
 </head>
-
-  <!-- Modal de Comentários -->
-<div id="modal-comentarios" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" onclick="fecharModalComentarios()">&times;</span>
-    <h3>Editar Comentários</h3>
-    <textarea id="comentarios-editar-textarea" rows="10" style="width: 100%; margin-bottom: 20px;"></textarea>
-    <button onclick="salvarComentarios()">Salvar Alterações</button>
-  </div>
-</div>
-
 <body>
   <!-- Tela de Login -->
   <div id="login-screen">
@@ -814,35 +890,46 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
-
+  
   // Modal de Comentários
-const modalComentarios = document.getElementById("modal-comentarios");
-const textareaComentarios = document.getElementById("comentarios-editar-textarea");
-const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
-editarComentariosBtn.addEventListener("click", () => {
-  textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
-  modalComentarios.classList.remove("hidden");
-});
+  editarComentariosBtn.addEventListener("click", () => {
+    textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
+    modalComentarios.classList.remove("hidden");
+  });
 
-function fecharModalComentarios() {
-  modalComentarios.classList.add("hidden");
-}
-
-async function salvarComentarios() {
-  const novoTexto = textareaComentarios.value.trim();
-  document.getElementById("det-comentarios-text").textContent = novoTexto;
-
-  if (currentDocId) {
-    await db.collection("pendencias").doc(currentDocId).update({
-      comentarios: novoTexto
-    });
-    salvarMsg.textContent = "Comentários atualizados!";
-    fecharModalComentarios();
-    carregarPendencias();
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
   }
-}
 
-  </script>
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
+
+</script>
+
+<!-- Modal de Comentários -->
+<div id="modal-comentarios" class="modal hidden">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModalComentarios()">&times;</span>
+    <h3>Editar Comentários</h3>
+    <textarea id="comentarios-editar-textarea" rows="10" style="width: 100%; margin-bottom: 20px;"></textarea>
+    <button onclick="salvarComentarios()">Salvar Alterações</button>
+  </div>
+</div>
+
 </body>
 </html>
