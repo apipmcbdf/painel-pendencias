@@ -28,17 +28,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
-
-  <!-- Modal de Comentários -->
-<div id="modal-comentarios" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" onclick="fecharModalComentarios()">&times;</span>
-    <h3>Editar Comentários</h3>
-    <textarea id="comentarios-editar-textarea" rows="10" style="width: 100%; margin-bottom: 20px;"></textarea>
-    <button onclick="salvarComentarios()">Salvar Alterações</button>
-  </div>
-</div>
-
 <body>
   <!-- Tela de Login -->
   <div id="login-screen">
@@ -97,10 +86,11 @@
               </select>
             </p>
             <p>
-  <strong>Comentários:</strong>
-  <span id="det-comentarios-text"></span>
-  <button id="editar-comentarios-btn">✎</button>
-</p>
+              <strong>Comentários:</strong>
+              <span id="det-comentarios-text"></span>
+              <textarea id="det-comentarios" class="hidden" rows="3"></textarea>
+              <button class="editar" data-alvo="det-comentarios">✎</button>
+            </p>
             <button id="salvar-btn">Salvar Alterações</button>
             <p id="salvar-msg" class="success"></p>
           </div>
@@ -131,8 +121,8 @@
     </div>
   </div>
 
-  <script>
-    console.log("✅ Script carregado");
+  <script type="module">
+console.log("✅ Script carregado");
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMT1wEM5zgWgazsKv8XnO0zzHp7UB4ov4",
@@ -320,6 +310,8 @@ function carregarAndamentos(lista) {
       originalValues["det-status"] = data.status || "pendente";
 
       document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
+      document.getElementById("det-comentarios").value = data.comentarios || "";
+      originalValues["det-comentarios"] = data.comentarios || "";
 
       carregarAndamentos(data.andamentos || []);
       carregarPartes(data.partes || []);
@@ -679,8 +671,8 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       sb.textContent = "Salvar Parte"; sb.className = "parte-salvar";
       sb.dataset.index = index; parteDetailsContainer.appendChild(sb);
       
-      
       sb.addEventListener("click", async () => {
+        // Montar objeto atualizado
         const newStatus = statusSelect.value;
         const interesseValue = interesseSelect.value;
         const lpValue = lpSelect.value;
@@ -689,59 +681,25 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
           interesse: interesseValue,
           lp: lpValue
         };
-        // Dados de vivo com checagem de existência
+        // Dados de vivo
         if (newStatus === "vivo") {
-          const telEl = document.querySelector("#additional-fields .parte-telefone");
-          const emailEl = document.querySelector("#additional-fields .parte-email");
-          const assinouEl = document.querySelector("#additional-fields .parte-assinou");
-          updatedPart.telefone = telEl?.value.trim() || "";
-          updatedPart.email = emailEl?.value.trim() || "";
+          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone").value.trim();
+          updatedPart.email = document.querySelector("#additional-fields .parte-email").value.trim();
           updatedPart.contato = contatoSelect.value;
-          updatedPart.assinou = (contatoSelect.value === "sim")
-            ? (assinouEl?.value || "")
+          updatedPart.assinou = contatoSelect.value === "sim"
+            ? document.querySelector("#additional-fields .parte-assinou").value
             : "não";
           updatedPart.herdeiros = [];
         } else if (newStatus === "falecido") {
+          // Coletar lista de herdeiros
           const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
-          updatedPart.herdeiros = Array.from(rows).map(row => ({
-            nome: row.querySelector(".herdeiro-name")?.value || "",
-            assinou: row.querySelector(".herdeiro-assinou")?.value || "",
-            interesse: row.querySelector(".herdeiro-interesse")?.value || ""
-          }));
-        }
-        // Campos de LP com checagem
-        if (lpValue === "sim") {
-          const lpNumEl = document.querySelector(".parte-lp-numero-processo");
-          const lpAdvEl = document.querySelector(".parte-lp-advogado");
-          const lpObsEl = document.querySelector(".parte-lp-observacoes");
-          updatedPart.numero_processo_lp = lpNumEl?.value.trim() || "";
-          updatedPart.advogado_lp = lpAdvEl?.value.trim() || "";
-          updatedPart.observacoes_lp = lpObsEl?.value.trim() || "";
-        }
-        // Limpa propriedades undefined
-        Object.keys(updatedPart).forEach(key => {
-          if (updatedPart[key] === undefined) {
-            delete updatedPart[key];
-          }
-        });
-        // Atualizar no Firestore
-        const docRef = db.collection("pendencias").doc(currentDocId);
-        const docSnap = await docRef.get();
-        let partesArr = docSnap.data().partes || [];
-        partesArr[index] = updatedPart;
-        // Limpeza definitiva de undefined
-        partesArr = partesArr.map(part => {
-          Object.keys(part).forEach(k => {
-            if (part[k] === undefined) delete part[k];
+          updatedPart.herdeiros = Array.from(rows).map(row => {
+            return {
+              nome: row.querySelector(".herdeiro-name").value,
+              assinou: row.querySelector(".herdeiro-assinou").value,
+              interesse: row.querySelector(".herdeiro-interesse").value
+            };
           });
-          return part;
-        });
-        await docRef.update({ partes: partesArr });
-        alert("Informações da parte atualizadas!");
-        modal.classList.add("hidden");
-        carregarDetalhes(currentDocId);
-      });
-
         }
         // Dados de LP
         if (lpValue === "sim") {
@@ -846,35 +804,6 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
-
-  // Modal de Comentários
-const modalComentarios = document.getElementById("modal-comentarios");
-const textareaComentarios = document.getElementById("comentarios-editar-textarea");
-const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
-
-editarComentariosBtn.addEventListener("click", () => {
-  textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
-  modalComentarios.classList.remove("hidden");
-});
-
-function fecharModalComentarios() {
-  modalComentarios.classList.add("hidden");
-}
-
-async function salvarComentarios() {
-  const novoTexto = textareaComentarios.value.trim();
-  document.getElementById("det-comentarios-text").textContent = novoTexto;
-
-  if (currentDocId) {
-    await db.collection("pendencias").doc(currentDocId).update({
-      comentarios: novoTexto
-    });
-    salvarMsg.textContent = "Comentários atualizados!";
-    fecharModalComentarios();
-    carregarPendencias();
-  }
-}
-
   </script>
 </body>
 </html>
