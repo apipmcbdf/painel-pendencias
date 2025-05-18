@@ -30,15 +30,6 @@
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
-if (editarComentariosBtn) {
-if (editarComentariosBtn) {
-  editarComentariosBtn.addEventListener("click", () => {
-    const span = document.getElementById("det-comentarios-text");
-    if (span && textareaComentarios) {
-      textareaComentarios.value = span.textContent.trim();
-      modalComentarios.classList.remove("hidden");
-    }
-  });
 }
 }
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
@@ -63,6 +54,38 @@ if (editarComentariosBtn) {
     }
   }
 
+
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  if (editarComentariosBtn) {
+    editarComentariosBtn.addEventListener("click", () => {
+      const span = document.getElementById("det-comentarios-text");
+      if (span && textareaComentarios) {
+        textareaComentarios.value = span.textContent.trim();
+        modalComentarios.classList.remove("hidden");
+      }
+    });
+  }
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
 </script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js">
   // Modal de Comentários
@@ -70,15 +93,6 @@ if (editarComentariosBtn) {
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
-if (editarComentariosBtn) {
-if (editarComentariosBtn) {
-  editarComentariosBtn.addEventListener("click", () => {
-    const span = document.getElementById("det-comentarios-text");
-    if (span && textareaComentarios) {
-      textareaComentarios.value = span.textContent.trim();
-      modalComentarios.classList.remove("hidden");
-    }
-  });
 }
 }
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
@@ -103,6 +117,38 @@ if (editarComentariosBtn) {
     }
   }
 
+
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  if (editarComentariosBtn) {
+    editarComentariosBtn.addEventListener("click", () => {
+      const span = document.getElementById("det-comentarios-text");
+      if (span && textareaComentarios) {
+        textareaComentarios.value = span.textContent.trim();
+        modalComentarios.classList.remove("hidden");
+      }
+    });
+  }
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
 </script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
   // Modal de Comentários
@@ -110,15 +156,6 @@ if (editarComentariosBtn) {
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
-if (editarComentariosBtn) {
-if (editarComentariosBtn) {
-  editarComentariosBtn.addEventListener("click", () => {
-    const span = document.getElementById("det-comentarios-text");
-    if (span && textareaComentarios) {
-      textareaComentarios.value = span.textContent.trim();
-      modalComentarios.classList.remove("hidden");
-    }
-  });
 }
 }
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
@@ -143,6 +180,38 @@ if (editarComentariosBtn) {
     }
   }
 
+
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  if (editarComentariosBtn) {
+    editarComentariosBtn.addEventListener("click", () => {
+      const span = document.getElementById("det-comentarios-text");
+      if (span && textareaComentarios) {
+        textareaComentarios.value = span.textContent.trim();
+        modalComentarios.classList.remove("hidden");
+      }
+    });
+  }
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
 </script>
 </head>
 <body>
@@ -923,15 +992,6 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
-if (editarComentariosBtn) {
-if (editarComentariosBtn) {
-  editarComentariosBtn.addEventListener("click", () => {
-    const span = document.getElementById("det-comentarios-text");
-    if (span && textareaComentarios) {
-      textareaComentarios.value = span.textContent.trim();
-      modalComentarios.classList.remove("hidden");
-    }
-  });
 }
 }
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
@@ -956,6 +1016,38 @@ if (editarComentariosBtn) {
     }
   }
 
+
+  // Modal de Comentários
+  const modalComentarios = document.getElementById("modal-comentarios");
+  const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+  if (editarComentariosBtn) {
+    editarComentariosBtn.addEventListener("click", () => {
+      const span = document.getElementById("det-comentarios-text");
+      if (span && textareaComentarios) {
+        textareaComentarios.value = span.textContent.trim();
+        modalComentarios.classList.remove("hidden");
+      }
+    });
+  }
+
+  function fecharModalComentarios() {
+    modalComentarios.classList.add("hidden");
+  }
+
+  async function salvarComentarios() {
+    const novoTexto = textareaComentarios.value.trim();
+    document.getElementById("det-comentarios-text").textContent = novoTexto;
+    if (currentDocId) {
+      await db.collection("pendencias").doc(currentDocId).update({
+        comentarios: novoTexto
+      });
+      salvarMsg.textContent = "Comentários atualizados!";
+      fecharModalComentarios();
+      carregarPendencias();
+    }
+  }
 </script>
 
 <!-- Modal de Comentários -->
