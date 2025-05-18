@@ -292,3 +292,15 @@ button:hover { background-color: #0056b3; }
   background-color: #0056b3 !important; /* fallback if needed */
   color: white !important;
 }
+
+#det-comentarios {
+  width: 100%;
+  font-size: 1rem;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
