@@ -30,7 +30,15 @@
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
+if (editarComentariosBtn) {
   editarComentariosBtn.addEventListener("click", () => {
+    const span = document.getElementById("det-comentarios-text");
+    if (span && textareaComentarios) {
+      textareaComentarios.value = span.textContent.trim();
+      modalComentarios.classList.remove("hidden");
+    }
+  });
+}
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
     modalComentarios.classList.remove("hidden");
   });
@@ -60,7 +68,15 @@
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
+if (editarComentariosBtn) {
   editarComentariosBtn.addEventListener("click", () => {
+    const span = document.getElementById("det-comentarios-text");
+    if (span && textareaComentarios) {
+      textareaComentarios.value = span.textContent.trim();
+      modalComentarios.classList.remove("hidden");
+    }
+  });
+}
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
     modalComentarios.classList.remove("hidden");
   });
@@ -90,7 +106,15 @@
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
+if (editarComentariosBtn) {
   editarComentariosBtn.addEventListener("click", () => {
+    const span = document.getElementById("det-comentarios-text");
+    if (span && textareaComentarios) {
+      textareaComentarios.value = span.textContent.trim();
+      modalComentarios.classList.remove("hidden");
+    }
+  });
+}
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
     modalComentarios.classList.remove("hidden");
   });
@@ -396,8 +420,6 @@ function carregarAndamentos(lista) {
       originalValues["det-status"] = data.status || "pendente";
 
       document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
-      document.getElementById("det-comentarios").value = data.comentarios || "";
-      originalValues["det-comentarios"] = data.comentarios || "";
 
       carregarAndamentos(data.andamentos || []);
       carregarPartes(data.partes || []);
@@ -837,7 +859,6 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       if (!currentDocId) return;
       const dados = {
         status: document.getElementById("det-status").value,
-        comentarios: document.getElementById("det-comentarios").value.trim()
       };
       await db.collection("pendencias").doc(currentDocId).update(dados);
       salvarMsg.textContent = "Atualizado com sucesso!";
@@ -896,7 +917,15 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
   const textareaComentarios = document.getElementById("comentarios-editar-textarea");
   const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
 
+if (editarComentariosBtn) {
   editarComentariosBtn.addEventListener("click", () => {
+    const span = document.getElementById("det-comentarios-text");
+    if (span && textareaComentarios) {
+      textareaComentarios.value = span.textContent.trim();
+      modalComentarios.classList.remove("hidden");
+    }
+  });
+}
     textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
     modalComentarios.classList.remove("hidden");
   });
