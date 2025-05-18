@@ -28,6 +28,17 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
+
+  <!-- Modal de Comentários -->
+<div id="modal-comentarios" class="modal hidden">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModalComentarios()">&times;</span>
+    <h3>Editar Comentários</h3>
+    <textarea id="comentarios-editar-textarea" rows="10" style="width: 100%; margin-bottom: 20px;"></textarea>
+    <button onclick="salvarComentarios()">Salvar Alterações</button>
+  </div>
+</div>
+
 <body>
   <!-- Tela de Login -->
   <div id="login-screen">
@@ -86,11 +97,10 @@
               </select>
             </p>
             <p>
-              <strong>Comentários:</strong>
-              <span id="det-comentarios-text"></span>
-              <textarea id="det-comentarios" class="hidden" rows="3"></textarea>
-              <button class="editar" data-alvo="det-comentarios">✎</button>
-            </p>
+  <strong>Comentários:</strong>
+  <span id="det-comentarios-text"></span>
+  <button id="editar-comentarios-btn">✎</button>
+</p>
             <button id="salvar-btn">Salvar Alterações</button>
             <p id="salvar-msg" class="success"></p>
           </div>
@@ -121,7 +131,7 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
     console.log("✅ Script carregado");
 
     const firebaseConfig = {
@@ -677,10 +687,11 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
   const interesseVal  = interesseSelect.value;
   const lpVal         = lpSelect.value;
   let updatedPart     = { status: newStatus, interesse: interesseVal, lp: lpVal };
+
   // Garante que o nome da parte seja mantido
   updatedPart.nome = typeof parte === "object" ? parte.nome : parte;
 
-  // Campos “vivo”
+  // Campos "vivo"
   if (newStatus === "vivo") {
     const telEl    = document.querySelector("#additional-fields .parte-telefone");
     const emailEl  = document.querySelector("#additional-fields .parte-email");
@@ -692,9 +703,7 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
                            ? (assinEl?.value || "")
                            : "não";
     updatedPart.herdeiros = [];
-  }
-  // Campos “falecido”
-  else if (newStatus === "falecido") {
+  } else if (newStatus === "falecido") {
     const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
     updatedPart.herdeiros = Array.from(rows).map(row => ({
       nome:       row.querySelector(".herdeiro-name")?.value || "",
@@ -703,33 +712,29 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
     }));
   }
 
-  // Campos LP, se aplicável
+  // Campos LP
   if (lpVal === "sim") {
     updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo")?.value.trim() || "";
     updatedPart.advogado_lp        = document.querySelector(".parte-lp-advogado")?.value.trim()        || "";
     updatedPart.observacoes_lp     = document.querySelector(".parte-lp-observacoes")?.value.trim()     || "";
   }
 
-  // Garante que não há campos undefined em updatedPart
+  // Limpa undefined
   Object.keys(updatedPart).forEach(key => {
     if (updatedPart[key] === undefined) delete updatedPart[key];
   });
 
-  // 2) Busca o array atual e substitui a parte modificada
+  // Atualiza no Firestore
   const docRef = db.collection("pendencias").doc(currentDocId);
   const docSnap = await docRef.get();
   let partesArr = docSnap.data().partes || [];
   partesArr[index] = updatedPart;
-
-  // Limpa undefined em cada parte do array inteiro
   partesArr = partesArr.map(part => {
     Object.keys(part).forEach(k => {
       if (part[k] === undefined) delete part[k];
     });
     return part;
   });
-
-  // 3) Atualiza no Firestore
   await docRef.update({ partes: partesArr });
 
   alert("Informações da parte atualizadas!");
@@ -840,6 +845,35 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
+
+  // Modal de Comentários
+const modalComentarios = document.getElementById("modal-comentarios");
+const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+editarComentariosBtn.addEventListener("click", () => {
+  textareaComentarios.value = document.getElementById("det-comentarios-text").textContent.trim();
+  modalComentarios.classList.remove("hidden");
+});
+
+function fecharModalComentarios() {
+  modalComentarios.classList.add("hidden");
+}
+
+async function salvarComentarios() {
+  const novoTexto = textareaComentarios.value.trim();
+  document.getElementById("det-comentarios-text").textContent = novoTexto;
+
+  if (currentDocId) {
+    await db.collection("pendencias").doc(currentDocId).update({
+      comentarios: novoTexto
+    });
+    salvarMsg.textContent = "Comentários atualizados!";
+    fecharModalComentarios();
+    carregarPendencias();
+  }
+}
+
   </script>
 </body>
 </html>
