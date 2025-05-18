@@ -306,6 +306,7 @@ button:hover { background-color: #0056b3; }
 
 
 
+/* Estilo para textarea do modal de comentários */
 #modal-comentarios textarea {
   font-size: 1rem;
   padding: 10px;

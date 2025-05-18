@@ -25,11 +25,39 @@
 </style>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
-  // Modal de Comentários
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js">
-  // Modal de Comentários
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
-  // Modal de Comentários
+    // Modal de Comentários
+    const modalComentarios = document.getElementById("modal-comentarios");
+    const textareaComentarios = document.getElementById("comentarios-editar-textarea");
+    const editarComentariosBtn = document.getElementById("editar-comentarios-btn");
+
+    if (editarComentariosBtn) {
+      editarComentariosBtn.addEventListener("click", () => {
+        const span = document.getElementById("det-comentarios-text");
+        if (span && textareaComentarios) {
+          textareaComentarios.value = span.textContent.trim();
+          modalComentarios.classList.remove("hidden");
+        }
+      });
+    }
+
+    function fecharModalComentarios() {
+      modalComentarios.classList.add("hidden");
+    }
+
+    async function salvarComentarios() {
+      const novoTexto = textareaComentarios.value.trim();
+      document.getElementById("det-comentarios-text").textContent = novoTexto;
+      if (currentDocId) {
+        await db.collection("pendencias").doc(currentDocId).update({ comentarios: novoTexto });
+        salvarMsg.textContent = "Comentários atualizados!";
+        fecharModalComentarios();
+        carregarPendencias();
+      }
+    }
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
   <!-- Tela de Login -->
@@ -111,7 +139,17 @@
         </section>
       </main>
     </div>
+  
+  <!-- Modal de Comentários -->
+  <div id="modal-comentarios" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="fecharModalComentarios()">&times;</span>
+      <h3>Editar Comentários</h3>
+      <textarea id="comentarios-editar-textarea" rows="10" style="width:100%; margin-bottom:20px;"></textarea>
+      <button onclick="salvarComentarios()">Salvar Alterações</button>
+    </div>
   </div>
+
 
   <!-- Modal para exibir os detalhes da Parte -->
   <div id="modal" class="modal hidden">
@@ -312,6 +350,8 @@ function carregarAndamentos(lista) {
       originalValues["det-status"] = data.status || "pendente";
 
       document.getElementById("det-comentarios-text").textContent = data.comentarios || "";
+      document.getElementById("det-comentarios").value = data.comentarios || "";
+      originalValues["det-comentarios"] = data.comentarios || "";
 
       carregarAndamentos(data.andamentos || []);
       carregarPartes(data.partes || []);
@@ -751,6 +791,7 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       if (!currentDocId) return;
       const dados = {
         status: document.getElementById("det-status").value,
+        comentarios: document.getElementById("det-comentarios").value.trim()
       };
       await db.collection("pendencias").doc(currentDocId).update(dados);
       salvarMsg.textContent = "Atualizado com sucesso!";
@@ -803,18 +844,6 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         modal.classList.add("hidden");
       }
     });
-  
-  // Modal de Comentários
-
-<!-- Modal de Comentários -->
-<div id="modal-comentarios" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" onclick="fecharModalComentarios()">&times;</span>
-    <h3>Editar Comentários</h3>
-    <textarea id="comentarios-editar-textarea" rows="10" style="width: 100%; margin-bottom: 20px;"></textarea>
-    <button onclick="salvarComentarios()">Salvar Alterações</button>
-  </div>
-</div>
-
-<script>  const modalComentarios = document.getElementById("modal-comentarios");  const textareaComentarios = document.getElementById("comentarios-editar-textarea");  const editarComentariosBtn = document.getElementById("editar-comentarios-btn");  if (editarComentariosBtn) {    editarComentariosBtn.addEventListener("click", () => {      const span = document.getElementById("det-comentarios-text");      if (span && textareaComentarios) {        textareaComentarios.value = span.textContent.trim();        modalComentarios.classList.remove("hidden");      }    });  }  function fecharModalComentarios() {    modalComentarios.classList.add("hidden");  }  async function salvarComentarios() {    const novoTexto = textareaComentarios.value.trim();    document.getElementById("det-comentarios-text").textContent = novoTexto;    if (currentDocId) {      await db.collection("pendencias").doc(currentDocId).update({        comentarios: novoTexto      });      salvarMsg.textContent = "Comentários atualizados!";      fecharModalComentarios();      carregarPendencias();    }  }</script></body>
+  </script>
+</body>
 </html>
