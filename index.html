@@ -711,16 +711,16 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         };
         // Dados de vivo
         if (newStatus === "vivo") {
-          updatedPart.telefone = document.querySelector("#additional-fields .parte-telefone").value.trim();
-          updatedPart.email = document.querySelector("#additional-fields .parte-email").value.trim();
+          updatedPart.telefone = parteDetailsContainer.querySelector(".parte-telefone").value.trim();
+          updatedPart.email = parteDetailsContainer.querySelector(".parte-email").value.trim();
           updatedPart.contato = contatoSelect.value;
           updatedPart.assinou = contatoSelect.value === "sim"
-            ? document.querySelector("#additional-fields .parte-assinou").value
+            ? parteDetailsContainer.querySelector(".parte-assinou").value
             : "não";
           updatedPart.herdeiros = [];
         } else if (newStatus === "falecido") {
           // Coletar lista de herdeiros
-          const rows = document.querySelectorAll("#herdeiros-list-modal .herdeiro-row");
+          const rows = parteDetailsContainer.querySelectorAll(".herdeiro-row");
           updatedPart.herdeiros = Array.from(rows).map(row => {
             return {
               nome: row.querySelector(".herdeiro-name").value,
@@ -731,9 +731,9 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
         }
         // Dados de LP
         if (lpValue === "sim") {
-          updatedPart.numero_processo_lp = document.querySelector(".parte-lp-numero-processo").value.trim();
-          updatedPart.advogado_lp = document.querySelector(".parte-lp-advogado").value.trim();
-          updatedPart.observacoes_lp = document.querySelector(".parte-lp-observacoes").value.trim();
+          updatedPart.numero_processo_lp = parteDetailsContainer.querySelector(".parte-lp-numero-processo").value.trim();
+          updatedPart.advogado_lp = parteDetailsContainer.querySelector(".parte-lp-advogado").value.trim();
+          updatedPart.observacoes_lp = parteDetailsContainer.querySelector(".parte-lp-observacoes").value.trim();
         }
         // Nome
         updatedPart.nome = typeof parte === "object" ? parte.nome : parte;
