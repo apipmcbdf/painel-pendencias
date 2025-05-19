@@ -359,15 +359,22 @@ function carregarAndamentos(lista) {
         } else {
           nomeDisplay = parte.nome;
         }
-        let emojis = "";
-        if (parte.lp && parte.lp.toLowerCase() === "sim") {
-          emojis = " ⚖️🚫";
-        } else if (parte.interesse && parte.interesse.toLowerCase() === "não") {
-          emojis = " 🙅‍♂️";
-        } else {
-          if (parte.assinou && parte.assinou.toLowerCase() === "sim") emojis += " ✍️";
-          if (parte.contato && parte.contato.toLowerCase() === "sim") emojis += " 🗣️";
-        }
+let emojis = "";
+const assinouParte = parte.assinou && parte.assinou.toLowerCase() === "sim";
+const statusParte = status === "falecido" || status === "morto";
+
+if (!statusParte) {
+  if (assinouParte) {
+    emojis = " ✍️"; // só mostra ✍️, mais nada
+  } else if (parte.lp && parte.lp.toLowerCase() === "sim") {
+    emojis = " ⚖️🚫";
+  } else if (parte.interesse && parte.interesse.toLowerCase() === "não") {
+    emojis = " 🙅‍♂️";
+  } else {
+    if (parte.contato && parte.contato.toLowerCase() === "sim") emojis += " 🗣️";
+  }
+}
+
         li.innerHTML = nomeDisplay + emojis;
         if (status === "falecido" && Array.isArray(parte.herdeiros) && parte.herdeiros.length > 0) {
           const herdeirosUL = document.createElement("ul");
@@ -375,7 +382,13 @@ function carregarAndamentos(lista) {
           parte.herdeiros.forEach(herdeiro => {
             const liHerdeiro = document.createElement("li");
             if (typeof herdeiro === "object" && herdeiro.hasOwnProperty("nome")) {
-              const herdeiroFlag = (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") ? "✍️" : "";
+              let herdeiroFlag = "";
+if (herdeiro.assinou && herdeiro.assinou.toLowerCase() === "sim") {
+  herdeiroFlag = "✍️";
+} else if (herdeiro.interesse && herdeiro.interesse.toLowerCase() === "não") {
+  herdeiroFlag = "🙅‍♂️";
+}
+
               liHerdeiro.innerHTML = `${herdeiro.nome} ${herdeiroFlag}`;
             } else {
               liHerdeiro.textContent = herdeiro;
