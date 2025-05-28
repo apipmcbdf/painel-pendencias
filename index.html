@@ -790,17 +790,21 @@ parteDetailsContainer.insertBefore(emailAssinouRow, additionalContainer);
       });
     });
 
-    salvarBtn.addEventListener("click", async () => {
-      if (!currentDocId) return;
-      const dados = {
-        status: document.getElementById("det-status").value,
-        comentarios: document.getElementById("det-comentarios").value.trim()
-      };
-      await db.collection("pendencias").doc(currentDocId).update(dados);
-      salvarMsg.textContent = "Atualizado com sucesso!";
-      carregarPendencias();
-      carregarDetalhes(currentDocId);
-    });
+salvarBtn.addEventListener("click", async () => {
+  if (!currentDocId) return;
+
+  const statusValue = document.getElementById("det-status").value;
+  const comentariosValue = document.getElementById("det-comentarios-text").textContent.trim();
+
+  await db.collection("pendencias").doc(currentDocId).update({
+    status: statusValue,
+    comentarios: comentariosValue
+  });
+
+  salvarMsg.textContent = "Atualizado com sucesso!";
+  carregarPendencias();
+  carregarDetalhes(currentDocId);
+});
 
     enviarAndamento.addEventListener("click", async () => {
       if (!currentDocId || !novoAndamento.value.trim()) return;
