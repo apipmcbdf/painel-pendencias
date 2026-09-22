@@ -1,0 +1,40 @@
+PASSO A PASSO - ADMINISTRAÇÃO DE USUÁRIOS
+
+1) Copie para a pasta do projeto:
+   - index.html
+   - style.css
+   - app.js
+   - firebase.json
+   - firestore.rules
+   - pasta functions inteira
+
+2) Abra PowerShell/Terminal nessa pasta.
+
+3) Execute:
+   npm install -g firebase-tools
+   firebase login
+   firebase use --add
+
+4) Entre na pasta functions e instale dependências:
+   cd functions
+   npm install
+   cd ..
+
+5) Publique as funções:
+   firebase deploy --only functions
+
+6) Compare firestore.rules com suas regras atuais antes de substituir.
+   Estando de acordo:
+   firebase deploy --only firestore:rules
+
+7) Publique os arquivos do site do mesmo modo que já publica o painel.
+
+8) Teste:
+   - Administração > + Novo usuário
+   - criar conta de teste
+   - Enviar senha
+   - bloquear
+   - ativar
+   - excluir
+
+IMPORTANTE: não coloque chave de conta de serviço (serviceAccount.json) dentro da pasta pública do site.

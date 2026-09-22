@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function legacyAdmin() {
+      return signedIn() && request.auth.token.email == 'cavictor.franco@gmail.com';
+    }
+
+    function legacyEditor() {
+      return signedIn() && request.auth.token.email in [
+        'advogada1@teste.com',
+        'yasmim.ribeiro@apipmcbdf.com.br',
+        'marcelledias.adv@gmail.com',
+        'grazielasuelimenini2@gmail.com',
+        'cavictor.franco@gmail.com',
+        'patricia.franco@apipmcbdf.com.br',
+        'savina.laila@apipmcbdf.com.br',
+        'lorena@apipmcbdf.com.br'
+      ];
+    }
+
+    function hasUidProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function hasEmailProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/usuarios/$(request.auth.token.email));
+    }
+
+    function uidRole() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil;
+    }
+
+    function emailRole() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.token.email)).data.perfil;
+    }
+
+    function isAdmin() {
+      return legacyAdmin()
+        || (hasUidProfile() && uidRole() == 'administrador')
+        || (hasEmailProfile() && emailRole() == 'administrador');
+    }
+
+    function canEdit() {
+      return legacyEditor()
+        || (hasUidProfile() && uidRole() in ['administrador', 'editor'])
+        || (hasEmailProfile() && emailRole() in ['administrador', 'editor']);
+    }
+
+    match /pendencias/{caseId} {
+      allow read: if signedIn();
+      allow create, update: if canEdit();
+      allow delete: if false;
+
+      match /andamentos/{docId} {
+        allow read: if signedIn();
+        allow create: if canEdit();
+        allow update, delete: if false;
+      }
+
+      match /historico/{docId} {
+        allow read: if signedIn();
+        allow create: if canEdit();
+        allow update, delete: if false;
+      }
+    }
+
+    match /tipos_caso/{docId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /usuarios/{docId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin();
+      // Exclusão de conta/perfil é feita somente pela Cloud Function administrativa.
+      allow delete: if false;
+    }
+  }
+}
