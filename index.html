@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Painel de Pendências</title>
-<link href="style.css?v=20261020nav2" rel="stylesheet"/>
+<link href="style.css?v=20261020types1" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -53,6 +53,7 @@
 <div class="heading-actions"><button class="btn secondary" id="home-vencidos-btn" type="button">Vencidos</button><button class="btn secondary" id="home-prazos-btn" type="button">Próximos 7 dias</button><button class="btn secondary" id="refresh-btn" type="button">↻ Atualizar</button></div>
 </div>
 <div class="stats-grid" id="stats-grid"></div><article class="panel priority-panel"><div class="panel-title"><h3>⚑ Atenção prioritária</h3><p class="muted small">Vencidos e próximos do vencimento</p></div><div class="compact-list" id="prioridades-list"></div></article>
+<section class="case-type-section" aria-labelledby="tipos-visao-titulo"><div class="section-heading type-heading"><div><h3 id="tipos-visao-titulo">Pendências por tipo de caso</h3><p class="muted small">Até cinco processos por tipo. Selecione um para abrir seus detalhes.</p></div></div><div class="type-overview-grid" id="tipos-visao-list"></div></section>
 <div class="dashboard-grid">
 <article class="panel">
 <div class="panel-title"><h3>Próximos prazos</h3></div>
@@ -279,6 +280,6 @@
 </form>
 </div>
 </div>
-<script src="app.js?v=20261020nav2"></script>
+<script src="app.js?v=20261020types1"></script>
 </body>
 </html>
