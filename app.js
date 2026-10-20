@@ -109,14 +109,19 @@
   }
   function canEdit() { return ['administrador', 'editor'].includes(state.currentProfile?.perfil) && state.currentProfile?.ativo !== false; }
   function isAdmin() { return state.currentProfile?.perfil === 'administrador' && state.currentProfile?.ativo !== false; }
-  function statusLabel(v) { return ({ pendente:'Pendente', em_andamento:'Em andamento', resolvido:'Resolvido', enviado:'Enviado', atrasado:'Atrasado' })[v] || v || 'Pendente'; }
+  function normalizedStatus(v) { return v === 'resolvido' || v === 'suspenso' ? v : 'pendente'; }
+  function hasActiveDeadline(c) { return normalizedStatus(c.status) === 'pendente'; }
+  function caseDeadlineDays(c) { return hasActiveDeadline(c) ? daysRemaining(c.prazo) : null; }
+  function statusLabel(v) { return ({ pendente:'Pendente', resolvido:'Resolvido', suspenso:'Suspenso' })[normalizedStatus(v)]; }
   function typeName(caseData) { return caseData.descricao || caseData.tipo_nome || caseData.tipo || 'Sem tipo'; }
+  function subjectName(caseData) { return (caseData.assunto || '').trim(); }
+  function caseLabel(caseData) { const type = typeName(caseData); const subject = subjectName(caseData); return subject ? `${type} - ${subject}` : type; }
   function getDriveUrl(caseData) { return caseData.drive_url || legacyDriveLinks[caseData.processo] || ''; }
   function updatedAt(caseData) { return caseData.updated_at || caseData.data_atualizacao || caseData.created_at || null; }
 
   function prazoInfo(caseData) {
-    if (caseData.status === 'resolvido') return { text:'Resolvido', cls:'success', dot:'success' };
-    if (caseData.status === 'enviado') return { text:'Enviado', cls:'info', dot:'info' };
+    if (normalizedStatus(caseData.status) === 'resolvido') return { text:'Resolvido', cls:'success', dot:'success' };
+    if (caseData.status === 'suspenso') return { text:'Suspenso · prazo interrompido', cls:'info', dot:'info' };
     const dias = daysRemaining(caseData.prazo);
     if (dias === null) return { text:'Sem prazo', cls:'', dot:'' };
     if (dias < 0) return { text:`Vencido há ${Math.abs(dias)} dia${Math.abs(dias) === 1 ? '' : 's'}`, cls:'danger', dot:'danger' };
@@ -218,10 +223,10 @@
       if (q && !caseSearchText(c).includes(q)) return false;
       if (tipo && typeName(c) !== tipo) return false;
       if (resp && ![c.responsavel_email,c.responsavel_nome].includes(resp)) return false;
-      const days = daysRemaining(c.prazo);
-      if (status === 'urgente' && !(c.status !== 'resolvido' && c.status !== 'enviado' && days !== null && days >= 0 && days <= 7)) return false;
-      if (status === 'vencido' && !(c.status !== 'resolvido' && days !== null && days < 0)) return false;
-      if (status && !['urgente','vencido'].includes(status) && c.status !== status) return false;
+      const days = caseDeadlineDays(c);
+      if (status === 'urgente' && !(hasActiveDeadline(c) && days !== null && days >= 0 && days <= 7)) return false;
+      if (status === 'vencido' && !(hasActiveDeadline(c) && days !== null && days < 0)) return false;
+      if (status && !['urgente','vencido'].includes(status) && normalizedStatus(c.status) !== status) return false;
       if (prazo === 'hoje' && days !== 0) return false;
       if (['7','15','30'].includes(prazo) && !(days !== null && days >= 0 && days <= Number(prazo))) return false;
       return true;
@@ -239,20 +244,28 @@
       const title=document.createElement('div'); title.className='case-title';
       const dot=document.createElement('span'); dot.className=`dot ${info.dot}`; dot.style.marginRight='7px'; title.append(dot, document.createTextNode(c.processo || 'Sem número'));
       const meta=document.createElement('div'); meta.className='case-meta';
-      [typeName(c), info.text].forEach(v=>{const s=document.createElement('span');s.textContent=v;meta.appendChild(s)});
+      [caseLabel(c), info.text].forEach(v=>{const s=document.createElement('span');s.textContent=v;meta.appendChild(s)});
       const sub=document.createElement('div'); sub.className='case-sub'; const pc=(c.partes||[]).length; sub.textContent=`${pc} parte${pc===1?'':'s'}${signed?` · ${signed} assinou/assinaram`:''}${c.responsavel_nome?` · ${c.responsavel_nome}`:''}`;
       card.append(title,meta,sub); card.addEventListener('click',()=>openCase(c.id)); els.list.appendChild(card);
     });
   }
 
   function renderDashboard() {
-    const active=state.cases.filter(c=>!c.arquivado); const metrics={pendentes:0,urgentes:0,vencidos:0,enviados:0,resolvidos:0};
-    active.forEach(c=>{ const d=daysRemaining(c.prazo); if(c.status==='pendente'||c.status==='em_andamento') metrics.pendentes++; if(c.status==='enviado')metrics.enviados++; if(c.status==='resolvido')metrics.resolvidos++; if(c.status!=='resolvido'&&c.status!=='enviado'&&d!==null&&d>=0&&d<=7)metrics.urgentes++; if(c.status!=='resolvido'&&d!==null&&d<0)metrics.vencidos++; });
-    const items=[['Pendentes',metrics.pendentes],['Urgentes',metrics.urgentes],['Vencidos',metrics.vencidos],['Enviados',metrics.enviados],['Resolvidos',metrics.resolvidos]];
+    const active=state.cases.filter(c=>!c.arquivado);
+    const metrics={pendentes:0,suspensos:0,resolvidos:0,urgentes:0,vencidos:0};
+    active.forEach(c=>{
+      const status=normalizedStatus(c.status), d=caseDeadlineDays(c);
+      if(status==='pendente')metrics.pendentes++;
+      if(status==='suspenso')metrics.suspensos++;
+      if(status==='resolvido')metrics.resolvidos++;
+      if(d!==null&&d>=0&&d<=7)metrics.urgentes++;
+      if(d!==null&&d<0)metrics.vencidos++;
+    });
+    const items=[['Pendentes',metrics.pendentes],['Urgentes',metrics.urgentes],['Vencidos',metrics.vencidos],['Suspensos',metrics.suspensos],['Resolvidos',metrics.resolvidos]];
     els.stats.innerHTML=''; items.forEach(([label,value])=>{const d=document.createElement('div');d.className='stat-card';const v=document.createElement('div');v.className='stat-value';v.textContent=value;const l=document.createElement('div');l.className='stat-label';l.textContent=label;d.append(v,l);els.stats.appendChild(d)});
 
-    const prioritiesEl=$('prioridades-list'); prioritiesEl.innerHTML=''; const priorityCases=active.filter(c=>c.status!=='resolvido'&&c.status!=='enviado'&&daysRemaining(c.prazo)!==null&&daysRemaining(c.prazo)<=7).sort((a,b)=>daysRemaining(a.prazo)-daysRemaining(b.prazo)).slice(0,6); if(!priorityCases.length) prioritiesEl.innerHTML='<div class="empty-state">Nenhuma pendência urgente no momento.</div>';priorityCases.forEach(c=>prioritiesEl.appendChild(compactCaseItem(c,prazoInfo(c).text, true)));
-    els.proximos.innerHTML=''; const upcoming=active.filter(c=>c.status!=='resolvido'&&c.status!=='enviado'&&daysRemaining(c.prazo)!==null&&daysRemaining(c.prazo)>=0).sort((a,b)=>daysRemaining(a.prazo)-daysRemaining(b.prazo)).slice(0,8);
+    const prioritiesEl=$('prioridades-list'); prioritiesEl.innerHTML=''; const priorityCases=active.filter(c=>hasActiveDeadline(c)&&caseDeadlineDays(c)!==null&&caseDeadlineDays(c)<=7).sort((a,b)=>daysRemaining(a.prazo)-daysRemaining(b.prazo)).slice(0,6); if(!priorityCases.length) prioritiesEl.innerHTML='<div class="empty-state">Nenhuma pendência urgente no momento.</div>';priorityCases.forEach(c=>prioritiesEl.appendChild(compactCaseItem(c,prazoInfo(c).text, true)));
+    els.proximos.innerHTML=''; const upcoming=active.filter(c=>hasActiveDeadline(c)&&caseDeadlineDays(c)!==null&&caseDeadlineDays(c)>=0).sort((a,b)=>daysRemaining(a.prazo)-daysRemaining(b.prazo)).slice(0,8);
     if(!upcoming.length) els.proximos.innerHTML='<div class="empty-state">Nenhum prazo próximo.</div>';
     upcoming.forEach(c=>els.proximos.appendChild(compactCaseItem(c, prazoInfo(c).text, true)));
     renderTypeOverview(active);
@@ -266,9 +279,9 @@
     const row=document.createElement('div');row.className='compact-item';
     row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',`Abrir processo ${c.processo||'sem número'}`);
     const left=document.createElement('div');const strong=document.createElement('strong');strong.textContent=c.processo||'Sem número';
-    const small=document.createElement('small');small.append(document.createTextNode(`${typeName(c)} · `));
+    const small=document.createElement('small');small.append(document.createTextNode(`${caseLabel(c)} · `));
     const deadline=document.createElement('span');deadline.textContent=subtitle;
-    if(highlightDeadline && daysRemaining(c.prazo)!==null && daysRemaining(c.prazo)<0 && !['enviado','resolvido'].includes(c.status))deadline.className='overdue-text';
+    if(highlightDeadline && caseDeadlineDays(c)!==null && caseDeadlineDays(c)<0)deadline.className='overdue-text';
     small.appendChild(deadline);left.append(strong,small);row.append(left);
     row.addEventListener('click',()=>openCase(c.id));row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCase(c.id)}});
     return row;
@@ -277,14 +290,14 @@
   function renderTypeOverview(active) {
     const root=$('tipos-visao-list');root.replaceChildren();
     const grouped=new Map();
-    active.filter(c=>!['enviado','resolvido'].includes(c.status)).forEach(c=>{
+    active.filter(c=>normalizedStatus(c.status)!=='resolvido').forEach(c=>{
       const name=typeName(c);if(!grouped.has(name))grouped.set(name,[]);grouped.get(name).push(c);
     });
     if(!grouped.size){root.innerHTML='<div class="empty-state">Nenhuma pendência em aberto por tipo de caso.</div>';return;}
     [...grouped.entries()].sort((a,b)=>a[0].localeCompare(b[0],'pt-BR')).forEach(([name,cases])=>{
-      const ordered=[...cases].sort((a,b)=>(daysRemaining(a.prazo)??Infinity)-(daysRemaining(b.prazo)??Infinity));
-      const overdue=cases.filter(c=>daysRemaining(c.prazo)!==null&&daysRemaining(c.prazo)<0).length;
-      const next=cases.filter(c=>daysRemaining(c.prazo)!==null&&daysRemaining(c.prazo)>=0&&daysRemaining(c.prazo)<=7).length;
+      const ordered=[...cases].sort((a,b)=>(caseDeadlineDays(a)??Infinity)-(caseDeadlineDays(b)??Infinity));
+      const overdue=cases.filter(c=>caseDeadlineDays(c)!==null&&caseDeadlineDays(c)<0).length;
+      const next=cases.filter(c=>caseDeadlineDays(c)!==null&&caseDeadlineDays(c)>=0&&caseDeadlineDays(c)<=7).length;
       const card=document.createElement('article');card.className='panel type-overview-card';
       const header=document.createElement('div');header.className='type-overview-head';
       const title=document.createElement('h4');title.textContent=name;
@@ -319,7 +332,7 @@
     const c=state.cases.find(x=>x.id===id); if(!c)return; state.currentCaseId=id; state.currentCase=c; showPanel('details'); selectDetailTab('resumo'); renderCaseList();
     setText(els.detTipo,typeName(c),'Sem tipo'); setText($('det-assunto-text'),c.assunto||'Não informado'); setText(els.detProcesso,c.processo,'Sem número'); setText(els.detData,formatDate(c.data_inicial)); setText(els.detPrazo,formatDate(c.prazo));
     setText(els.detResponsavel,c.responsavel_nome || userDisplay(c.responsavel_email) || 'Sem responsável');
-    setText(els.detAtualizado,updatedAt(c)?`${formatDateTime(updatedAt(c))}${c.updated_by_name?` · ${c.updated_by_name}`:''}`:'Sem registro'); els.detStatus.value=c.status||'pendente';
+    setText(els.detAtualizado,updatedAt(c)?`${formatDateTime(updatedAt(c))}${c.updated_by_name?` · ${c.updated_by_name}`:''}`:'Sem registro'); els.detStatus.value=normalizedStatus(c.status);
     const pi=prazoInfo(c); els.detPrazoBadge.className=`badge ${pi.cls}`; els.detPrazoBadge.textContent=pi.text;
     const drive=getDriveUrl(c); els.detDrive.classList.toggle('hidden',!drive); if(drive) els.detDrive.href=drive;
     els.arquivarCaso.textContent=c.arquivado?'Restaurar':'Arquivar';
@@ -356,7 +369,7 @@
   }
   function openCaseModal(c=null) {
     fillCaseSelects(); $('case-form').reset(); $('case-doc-id').value=c?.id||''; $('case-modal-title').textContent=c?'Editar caso':'Novo caso';
-    $('case-tipo').value=typeName(c||{})==='Sem tipo'?'':typeName(c||{}); $('case-assunto').value=['Auxílio-moradia','VPE'].includes(c?.assunto)?c.assunto:''; $('case-processo').value=c?.processo||''; $('case-data-inicial').value=toInputDate(c?.data_inicial); $('case-prazo').value=toInputDate(c?.prazo); $('case-status').value=c?.status||'pendente'; $('case-drive-url').value=getDriveUrl(c||{}); $('case-comentarios').value=c?.comentarios||'';
+    $('case-tipo').value=typeName(c||{})==='Sem tipo'?'':typeName(c||{}); $('case-assunto').value=['Auxílio-moradia','VPE','Auxílio-moradia e VPE'].includes(c?.assunto)?c.assunto:''; $('case-processo').value=c?.processo||''; $('case-data-inicial').value=toInputDate(c?.data_inicial); $('case-prazo').value=toInputDate(c?.prazo); $('case-status').value=normalizedStatus(c?.status); $('case-drive-url').value=getDriveUrl(c||{}); $('case-comentarios').value=c?.comentarios||'';
     if(c?.responsavel_email) $('case-responsavel').value=c.responsavel_email;
     openModal('case-modal');
   }
@@ -550,12 +563,12 @@
       if(filters.arquivo==='ativos'&&c.arquivado)return false;
       if(filters.arquivo==='arquivados'&&!c.arquivado)return false;
       if(filters.busca&&!caseSearchText(c).includes(normalizeText(filters.busca)))return false;
-      if(filters.status&&c.status!==filters.status)return false;
+      if(filters.status&&normalizedStatus(c.status)!==filters.status)return false;
       if(filters.tipo&&typeName(c)!==filters.tipo)return false;
       if(filters.assunto && (filters.assunto==='__sem__' ? Boolean(c.assunto) : c.assunto!==filters.assunto))return false;
       if(filters.responsavel&&![c.responsavel_email,c.responsavel_nome].includes(filters.responsavel))return false;
-      const remaining=daysRemaining(c.prazo),date=reportDateKey(c.prazo);
-      if(filters.prazo==='vencidos'&&!(remaining!==null&&remaining<0&&!['resolvido','enviado'].includes(c.status)))return false;
+      const remaining=caseDeadlineDays(c),date=reportDateKey(c.prazo);
+      if(filters.prazo==='vencidos'&&!(remaining!==null&&remaining<0))return false;
       if(filters.prazo==='hoje'&&remaining!==0)return false;
       if(['7','15','30'].includes(filters.prazo)&&!(remaining!==null&&remaining>=0&&remaining<=Number(filters.prazo)))return false;
       if(filters.prazo==='sem'&&remaining!==null)return false;
@@ -570,8 +583,8 @@
     reportRows=getReportRows();body.replaceChildren();
     let expired=0,upcoming=0,completed=0;
     for(const c of reportRows){
-      const days=daysRemaining(c.prazo);
-      if(['resolvido','enviado'].includes(c.status))completed++;
+      const days=caseDeadlineDays(c);
+      if(normalizedStatus(c.status)==='resolvido')completed++;
       else if(days!==null&&days<0)expired++;
       else if(days!==null&&days<=7)upcoming++;
       const row=document.createElement('tr');
@@ -580,7 +593,7 @@
     }
     if(!reportRows.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=8;cell.className='report-empty';cell.textContent='Nenhuma pendência encontrada com esses filtros.';row.appendChild(cell);body.appendChild(row);}
     $('relatorio-contagem').textContent=`${reportRows.length} registro(s)`;
-    $('relatorio-resumo').replaceChildren(...[['Total',reportRows.length],['Vencidos',expired],['Próximos 7 dias',upcoming],['Enviados / resolvidos',completed]].map(([label,n])=>{const div=document.createElement('div');div.className='report-stat';const strong=document.createElement('strong');strong.textContent=n;const span=document.createElement('span');span.textContent=label;div.append(strong,span);return div;}));
+    $('relatorio-resumo').replaceChildren(...[['Total',reportRows.length],['Vencidos',expired],['Próximos 7 dias',upcoming],['Resolvidos',completed]].map(([label,n])=>{const div=document.createElement('div');div.className='report-stat';const strong=document.createElement('strong');strong.textContent=n;const span=document.createElement('span');span.textContent=label;div.append(strong,span);return div;}));
   }
   function csvValue(value){const str=String(value??'').replace(/^[\s]*[=+@\-\t\r]/,match=>"'"+match);return '"'+str.replace(/"/g,'""')+'"';}
   function exportReportCsv(){

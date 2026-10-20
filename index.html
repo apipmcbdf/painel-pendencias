@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Painel de Pendências</title>
-<link href="style.css?v=20261020assunto1" rel="stylesheet"/>
+<link href="style.css?v=20261020status1" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -76,9 +76,9 @@
 <option value="urgente">Urgentes</option>
 <option value="vencido">Vencidos</option>
 <option value="pendente">Pendente</option>
-<option value="em_andamento">Em andamento</option>
-<option value="enviado">Enviado</option>
-<option value="resolvido">Resolvido</option>
+
+
+<option value="resolvido">Resolvido</option><option value="suspenso">Suspenso</option>
 </select>
 <select aria-label="Filtrar por tipo" id="filtro-tipo"><option value="">Todos os tipos</option></select>
 <select aria-label="Filtrar por responsável" id="filtro-responsavel"><option value="">Todos os responsáveis</option></select>
@@ -103,9 +103,9 @@
 <div class="section-heading"><div><h2>Relatório de pendências</h2><p class="muted">Selecione os critérios e exporte os resultados.</p></div><div class="report-actions"><button class="btn secondary" id="relatorio-csv-btn" type="button">Exportar CSV (Excel)</button><button class="btn primary" id="relatorio-print-btn" type="button">Imprimir / salvar PDF</button></div></div>
 <div class="panel report-filter-panel"><div class="report-filters">
 <label>Busca por processo, nome ou CPF<input id="relatorio-busca" type="search" placeholder="Pesquisar nos casos"/></label>
-<label>Situação<select id="relatorio-status"><option value="">Todas</option><option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option><option value="enviado">Enviado</option><option value="resolvido">Resolvido</option><option value="atrasado">Atrasado</option></select></label>
+<label>Situação<select id="relatorio-status"><option value="">Todas</option><option value="pendente">Pendente</option><option value="resolvido">Resolvido</option><option value="suspenso">Suspenso</option></select></label>
 <label>Tipo<select id="relatorio-tipo"><option value="">Todos</option></select></label>
-<label>Assunto<select id="relatorio-assunto"><option value="">Todos</option><option value="Auxílio-moradia">Auxílio-moradia</option><option value="VPE">VPE</option><option value="__sem__">Não informado</option></select></label>
+<label>Assunto<select id="relatorio-assunto"><option value="">Todos</option><option value="Auxílio-moradia">Auxílio-moradia</option><option value="VPE">VPE</option><option value="Auxílio-moradia e VPE">Auxílio-moradia e VPE</option><option value="__sem__">Não informado</option></select></label>
 <label>Responsável<select id="relatorio-responsavel"><option value="">Todos</option></select></label>
 <label>Casos<select id="relatorio-arquivo"><option value="ativos">Somente ativos</option><option value="arquivados">Somente arquivados</option><option value="todos">Ativos e arquivados</option></select></label>
 <label>Condição do prazo<select id="relatorio-prazo"><option value="">Todos os prazos</option><option value="vencidos">Vencidos e não concluídos</option><option value="hoje">Vencem hoje</option><option value="7">Vencem nos próximos 7 dias</option><option value="15">Vencem nos próximos 15 dias</option><option value="30">Vencem nos próximos 30 dias</option><option value="sem">Sem prazo</option></select></label>
@@ -140,10 +140,10 @@
 <label class="field-label">Status
                 <select id="det-status">
 <option value="pendente">Pendente</option>
-<option value="em_andamento">Em andamento</option>
-<option value="resolvido">Resolvido</option>
-<option value="enviado">Enviado</option>
-<option value="atrasado">Atrasado</option>
+
+<option value="resolvido">Resolvido</option><option value="suspenso">Suspenso</option>
+
+
 </select>
 </label>
 <button class="btn primary" id="salvar-status-btn" type="button">Salvar status</button>
@@ -200,12 +200,12 @@
 <input id="case-doc-id" type="hidden"/>
 <div class="form-grid two">
 <label>Tipo de caso<select id="case-tipo" required=""></select></label>
-<label>Assunto<select id="case-assunto"><option value="">Não informado</option><option value="Auxílio-moradia">Auxílio-moradia</option><option value="VPE">VPE</option></select></label>
+<label>Assunto<select id="case-assunto"><option value="">Não informado</option><option value="Auxílio-moradia">Auxílio-moradia</option><option value="VPE">VPE</option><option value="Auxílio-moradia e VPE">Auxílio-moradia e VPE</option></select></label>
 <label>Número do processo<input id="case-processo" required="" type="text"/></label>
 <label>Data inicial<input id="case-data-inicial" type="date"/></label>
 <label>Prazo final<input id="case-prazo" required="" type="date"/></label>
 <label>Status<select id="case-status">
-<option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option><option value="enviado">Enviado</option><option value="resolvido">Resolvido</option><option value="atrasado">Atrasado</option>
+<option value="pendente">Pendente</option><option value="resolvido">Resolvido</option><option value="suspenso">Suspenso</option>
 </select></label>
 <label>Responsável<select id="case-responsavel"><option value="">Sem responsável</option></select></label>
 </div>
@@ -283,6 +283,6 @@
 </form>
 </div>
 </div>
-<script src="app.js?v=20261020assunto1"></script>
+<script src="app.js?v=20261020f"></script>
 </body>
 </html>
