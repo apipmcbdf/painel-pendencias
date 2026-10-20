@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Painel de Pendências</title>
-<link href="style.css" rel="stylesheet"/>
+<link href="style.css?v=20261020r1" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -38,7 +38,7 @@
 </header>
 <div class="workspace">
 <aside class="sidebar" id="sidebar">
-<nav aria-label="Navegação principal" class="main-nav"><button class="main-nav-link active" id="inicio-nav-btn" type="button">⌂ Início</button><button class="main-nav-link" id="casos-nav-btn" type="button">▤ Casos ativos</button><button class="main-nav-link" id="prazos-nav-btn" type="button">◷ Prazos</button><button class="main-nav-link" id="arquivados-nav-btn" type="button">▣ Arquivados</button></nav><div class="sidebar-actions">
+<nav aria-label="Navegação principal" class="main-nav"><button class="main-nav-link active" id="inicio-nav-btn" type="button">⌂ Início</button><button class="main-nav-link" id="casos-nav-btn" type="button">▤ Casos ativos</button><button class="main-nav-link" id="prazos-nav-btn" type="button">◷ Prazos</button><button class="main-nav-link" id="arquivados-nav-btn" type="button">▣ Arquivados</button><button class="main-nav-link" id="relatorios-nav-btn" type="button">▤ Relatórios</button></nav><div class="sidebar-actions">
 <button class="btn primary full" id="novo-caso-btn" type="button">＋ Novo caso</button>
 <div class="search-box">
 <input id="busca-global" placeholder="Buscar processo, nome, CPF, telefone..." type="search"/>
@@ -88,6 +88,20 @@
 <div class="compact-list" id="ultimas-atualizacoes"></div>
 </article>
 </div>
+</section>
+<section class="hidden" id="relatorios-section">
+<div class="section-heading"><div><h2>Relatório de pendências</h2><p class="muted">Selecione os critérios e exporte os resultados.</p></div><div class="report-actions"><button class="btn secondary" id="relatorio-csv-btn" type="button">Exportar CSV (Excel)</button><button class="btn primary" id="relatorio-print-btn" type="button">Imprimir / salvar PDF</button></div></div>
+<div class="panel report-filter-panel"><div class="report-filters">
+<label>Busca por processo, nome ou CPF<input id="relatorio-busca" type="search" placeholder="Pesquisar nos casos"/></label>
+<label>Situação<select id="relatorio-status"><option value="">Todas</option><option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option><option value="enviado">Enviado</option><option value="resolvido">Resolvido</option><option value="atrasado">Atrasado</option></select></label>
+<label>Tipo<select id="relatorio-tipo"><option value="">Todos</option></select></label>
+<label>Responsável<select id="relatorio-responsavel"><option value="">Todos</option></select></label>
+<label>Casos<select id="relatorio-arquivo"><option value="ativos">Somente ativos</option><option value="arquivados">Somente arquivados</option><option value="todos">Ativos e arquivados</option></select></label>
+<label>Condição do prazo<select id="relatorio-prazo"><option value="">Todos os prazos</option><option value="vencidos">Vencidos e não concluídos</option><option value="hoje">Vencem hoje</option><option value="7">Vencem nos próximos 7 dias</option><option value="15">Vencem nos próximos 15 dias</option><option value="30">Vencem nos próximos 30 dias</option><option value="sem">Sem prazo</option></select></label>
+<label>Prazo inicial<input id="relatorio-inicio" type="date"/></label><label>Prazo final<input id="relatorio-fim" type="date"/></label>
+</div><div class="report-actions"><button class="btn secondary" id="relatorio-limpar-btn" type="button">Limpar filtros</button></div></div>
+<div class="report-summary" id="relatorio-resumo" aria-live="polite"></div>
+<div class="panel"><div class="panel-title"><h3>Resultados</h3><span class="muted small" id="relatorio-contagem"></span></div><div class="report-table-scroll"><table class="report-table"><thead><tr><th>Processo</th><th>Tipo</th><th>Situação</th><th>Responsável</th><th>Prazo</th><th>Condição</th><th>Arquivo</th></tr></thead><tbody id="relatorio-linhas"></tbody></table></div></div>
 </section>
 <section class="hidden" id="detalhes-section">
 <div class="detail-header panel">
@@ -256,6 +270,6 @@
 </form>
 </div>
 </div>
-<script src="app.js"></script>
+<script src="app.js?v=20261020r1"></script>
 </body>
 </html>

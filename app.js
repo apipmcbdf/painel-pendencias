@@ -188,6 +188,7 @@
     populateFilters();
     applyFilters();
     renderDashboard();
+    renderReport();
   }
 
   function populateFilters() {
@@ -199,6 +200,7 @@
     state.users.forEach(u=>resp.set(u.email||u.id,u.nome||u.email));
     state.cases.forEach(c=>{ if(c.responsavel_email || c.responsavel_nome) resp.set(c.responsavel_email || c.responsavel_nome, c.responsavel_nome || userDisplay(c.responsavel_email)); });
     [...resp.entries()].sort((a,b)=>a[1].localeCompare(b[1],'pt-BR')).forEach(([v,t])=>addOption(els.filtroResponsavel,v,t));
+    populateReportOptions();
   }
 
   function caseSearchText(c) {
@@ -263,7 +265,7 @@
 
   function selectDetailTab(name) { document.querySelectorAll('[data-tab-panel]').forEach(el=>el.classList.toggle('hidden',el.dataset.tabPanel!==name));document.querySelectorAll('.detail-tab').forEach(btn=>{const active=btn.dataset.tab===name;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));}); }
 
-  function showPanel(name) { els.home.classList.toggle('hidden',name!=='home'); els.details.classList.toggle('hidden',name!=='details'); els.admin.classList.toggle('hidden',name!=='admin'); }
+  function showPanel(name) { els.home.classList.toggle('hidden',name!=='home'); els.details.classList.toggle('hidden',name!=='details'); els.admin.classList.toggle('hidden',name!=='admin'); $('relatorios-section').classList.toggle('hidden',name!=='report'); }
 
   async function openCase(id) {
     const c=state.cases.find(x=>x.id===id); if(!c)return; state.currentCaseId=id; state.currentCase=c; showPanel('details'); selectDetailTab('resumo'); renderCaseList();
@@ -482,20 +484,86 @@
     try{await callAdminFunction('adminDeleteUser',{uid:u.uid});toast('Usuário excluído.');await loadUsers();populateFilters();await renderAdmin();}catch(err){toast(`Erro ao excluir: ${err.message}`,'error')}
   }
 
+
+  // Relatório calculado localmente com os casos já autorizados pelo Firebase.
+  const reportFields=['busca','status','tipo','responsavel','arquivo','prazo','inicio','fim'];
+  let reportRows=[];
+  function populateReportOptions(){
+    for(const [source,target] of [[els.filtroTipo,$('relatorio-tipo')],[els.filtroResponsavel,$('relatorio-responsavel')]]){
+      const prior=target.value;
+      target.replaceChildren(...Array.from(source.options,option=>new Option(option.textContent,option.value)));
+      target.value=prior;
+    }
+  }
+  function reportDateKey(value){const d=safeDate(value);if(!d)return '';const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
+  function getReportRows(){
+    const filters=Object.fromEntries(reportFields.map(k=>[k,$('relatorio-'+k).value]));
+    return state.cases.filter(c=>{
+      if(filters.arquivo==='ativos'&&c.arquivado)return false;
+      if(filters.arquivo==='arquivados'&&!c.arquivado)return false;
+      if(filters.busca&&!caseSearchText(c).includes(normalizeText(filters.busca)))return false;
+      if(filters.status&&c.status!==filters.status)return false;
+      if(filters.tipo&&typeName(c)!==filters.tipo)return false;
+      if(filters.responsavel&&![c.responsavel_email,c.responsavel_nome].includes(filters.responsavel))return false;
+      const remaining=daysRemaining(c.prazo),date=reportDateKey(c.prazo);
+      if(filters.prazo==='vencidos'&&!(remaining!==null&&remaining<0&&!['resolvido','enviado'].includes(c.status)))return false;
+      if(filters.prazo==='hoje'&&remaining!==0)return false;
+      if(['7','15','30'].includes(filters.prazo)&&!(remaining!==null&&remaining>=0&&remaining<=Number(filters.prazo)))return false;
+      if(filters.prazo==='sem'&&remaining!==null)return false;
+      if(filters.inicio&&(!date||date<filters.inicio))return false;
+      if(filters.fim&&(!date||date>filters.fim))return false;
+      return true;
+    });
+  }
+  function reportCell(row,text){const cell=document.createElement('td');cell.textContent=String(text??'—');row.appendChild(cell);}
+  function renderReport(){
+    const body=$('relatorio-linhas');if(!body)return;
+    reportRows=getReportRows();body.replaceChildren();
+    let expired=0,upcoming=0,completed=0;
+    for(const c of reportRows){
+      const days=daysRemaining(c.prazo);
+      if(['resolvido','enviado'].includes(c.status))completed++;
+      else if(days!==null&&days<0)expired++;
+      else if(days!==null&&days<=7)upcoming++;
+      const row=document.createElement('tr');
+      [c.processo||'—',typeName(c),statusLabel(c.status),c.responsavel_nome||userDisplay(c.responsavel_email)||'—',formatDate(c.prazo),prazoInfo(c).text,c.arquivado?'Arquivado':'Ativo'].forEach(t=>reportCell(row,t));
+      body.appendChild(row);
+    }
+    if(!reportRows.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=7;cell.className='report-empty';cell.textContent='Nenhuma pendência encontrada com esses filtros.';row.appendChild(cell);body.appendChild(row);}
+    $('relatorio-contagem').textContent=`${reportRows.length} registro(s)`;
+    $('relatorio-resumo').replaceChildren(...[['Total',reportRows.length],['Vencidos',expired],['Próximos 7 dias',upcoming],['Enviados / resolvidos',completed]].map(([label,n])=>{const div=document.createElement('div');div.className='report-stat';const strong=document.createElement('strong');strong.textContent=n;const span=document.createElement('span');span.textContent=label;div.append(strong,span);return div;}));
+  }
+  function csvValue(value){const str=String(value??'').replace(/^[\s]*[=+@\-\t\r]/,match=>"'"+match);return '"'+str.replace(/"/g,'""')+'"';}
+  function exportReportCsv(){
+    renderReport();
+    const rows=[['Processo','Tipo','Situação','Responsável','Prazo','Condição','Arquivo'],...reportRows.map(c=>[c.processo||'',typeName(c),statusLabel(c.status),c.responsavel_nome||userDisplay(c.responsavel_email)||'',formatDate(c.prazo),prazoInfo(c).text,c.arquivado?'Arquivado':'Ativo'])];
+    const content='\ufeff'+rows.map(row=>row.map(csvValue).join(';')).join('\r\n');
+    const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8;'}));
+    const a=document.createElement('a');a.href=url;a.download='relatorio-pendencias-'+reportDateKey(new Date())+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function wireReport(){
+    reportFields.forEach(k=>{const el=$('relatorio-'+k);el.addEventListener(k==='busca'?'input':'change',renderReport);});
+    $('relatorio-limpar-btn').addEventListener('click',()=>{reportFields.forEach(k=>$('relatorio-'+k).value=k==='arquivo'?'ativos':'');renderReport()});
+    $('relatorio-csv-btn').addEventListener('click',exportReportCsv);
+    $('relatorio-print-btn').addEventListener('click',()=>{renderReport();window.print()});
+  }
+
   function wireUiNavigation(){
-    const buttons={home:$('inicio-nav-btn'),cases:$('casos-nav-btn'),deadlines:$('prazos-nav-btn'),archive:$('arquivados-nav-btn')};
+    const buttons={home:$('inicio-nav-btn'),cases:$('casos-nav-btn'),deadlines:$('prazos-nav-btn'),archive:$('arquivados-nav-btn'),report:$('relatorios-nav-btn')};
     function activate(k){Object.entries(buttons).forEach(([name,button])=>button.classList.toggle('active',name===k));}
     function setList(view){state.listView=view;document.querySelectorAll('.sidebar-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));applyFilters();}
     buttons.home.addEventListener('click',()=>{showPanel('home');activate('home')});
     buttons.cases.addEventListener('click',()=>{setList('ativos');els.filtroPrazo.value='';els.filtroStatus.value='';applyFilters();showPanel('home');activate('cases');els.busca.focus()});
     buttons.deadlines.addEventListener('click',()=>{setList('ativos');els.filtroStatus.value='';els.filtroPrazo.value='7';applyFilters();showPanel('home');activate('deadlines');$('prioridades-list').scrollIntoView({block:'start',behavior:'smooth'})});
     buttons.archive.addEventListener('click',()=>{setList('arquivados');els.filtroPrazo.value='';els.filtroStatus.value='';applyFilters();showPanel('home');activate('archive')});
+    buttons.report.addEventListener('click',()=>{showPanel('report');activate('report');renderReport()});
     $('limpar-filtros-btn').addEventListener('click',()=>{els.busca.value='';[els.filtroStatus,els.filtroTipo,els.filtroResponsavel,els.filtroPrazo].forEach(el=>el.value='');applyFilters()});
     document.querySelectorAll('.detail-tab').forEach(btn=>btn.addEventListener('click',()=>selectDetailTab(btn.dataset.tab)));
   }
 
   function wireEvents(){
     wireUiNavigation();
+    wireReport();
     els.loginForm.addEventListener('submit',async e=>{e.preventDefault();els.loginError.textContent='';try{await auth.signInWithEmailAndPassword(els.email.value.trim(),els.password.value);}catch(err){els.loginError.textContent='Usuário ou senha inválidos.';console.error(err)}});
     els.logout.addEventListener('click',()=>auth.signOut()); els.novoCaso.addEventListener('click',()=>openCaseModal()); els.refresh.addEventListener('click',async()=>{await Promise.all([loadUsers(),loadTypes()]);await loadCases();toast('Dados atualizados.')});
     [els.busca,els.filtroStatus,els.filtroTipo,els.filtroResponsavel,els.filtroPrazo].forEach(el=>el.addEventListener(el===els.busca?'input':'change',applyFilters));
