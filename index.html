@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Painel de Pendências</title>
+<link href="style.css" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+</head>
+<body>
+<div aria-live="polite" id="toast-container"></div>
+<section class="screen-center" id="login-screen">
+<form class="login-card" id="login-form">
+<div class="brand-mark">PP</div>
+<h1>Painel de Pendências</h1>
+<p class="muted">Acesse sua área de trabalho.</p>
+<label>E-mail<input autocomplete="username" id="email" required="" type="email"/></label>
+<label>Senha<input autocomplete="current-password" id="password" required="" type="password"/></label>
+<button class="btn primary full" type="submit">Entrar</button>
+<p class="error" id="login-error"></p>
+</form>
+</section>
+<div class="hidden app-shell" id="dashboard">
+<header class="topbar">
+<div>
+<h1>Painel de Pendências</h1>
+<small id="topbar-subtitle">Gestão de casos, partes, prazos e andamentos</small>
+</div>
+<div class="topbar-actions">
+<span class="user-chip" id="current-user-label"></span>
+<button class="btn ghost hidden" id="admin-nav-btn" type="button">Administração</button>
+<button class="btn ghost" id="logout-btn" type="button">Sair</button>
+</div>
+</header>
+<div class="workspace">
+<aside class="sidebar" id="sidebar">
+<nav aria-label="Navegação principal" class="main-nav"><button class="main-nav-link active" id="inicio-nav-btn" type="button">⌂ Início</button><button class="main-nav-link" id="casos-nav-btn" type="button">▤ Casos ativos</button><button class="main-nav-link" id="prazos-nav-btn" type="button">◷ Prazos</button><button class="main-nav-link" id="arquivados-nav-btn" type="button">▣ Arquivados</button></nav><div class="sidebar-actions">
+<button class="btn primary full" id="novo-caso-btn" type="button">＋ Novo caso</button>
+<div class="search-box">
+<input id="busca-global" placeholder="Buscar processo, nome, CPF, telefone..." type="search"/>
+</div>
+</div>
+<details class="advanced-filters"><summary>Filtros avançados</summary><div class="filter-grid">
+<select aria-label="Filtrar por status" id="filtro-status">
+<option value="">Todos os status</option>
+<option value="urgente">Urgentes</option>
+<option value="vencido">Vencidos</option>
+<option value="pendente">Pendente</option>
+<option value="em_andamento">Em andamento</option>
+<option value="enviado">Enviado</option>
+<option value="resolvido">Resolvido</option>
+</select>
+<select aria-label="Filtrar por tipo" id="filtro-tipo"><option value="">Todos os tipos</option></select>
+<select aria-label="Filtrar por responsável" id="filtro-responsavel"><option value="">Todos os responsáveis</option></select>
+<select aria-label="Filtrar por prazo" id="filtro-prazo">
+<option value="">Qualquer prazo</option>
+<option value="hoje">Vence hoje</option>
+<option value="7">Próximos 7 dias</option>
+<option value="15">Próximos 15 dias</option>
+<option value="30">Próximos 30 dias</option>
+</select>
+</div><button class="btn secondary full" id="limpar-filtros-btn" type="button">Limpar filtros</button></details>
+<div class="sidebar-tabs">
+<button class="sidebar-tab active" data-view="ativos" type="button">Ativos</button>
+<button class="sidebar-tab" data-view="arquivados" type="button">Arquivados</button>
+</div>
+<div class="list-count" id="lista-contagem"></div>
+<div class="case-list" id="pendencias-list"></div>
+</aside>
+<main class="content" id="content">
+<section id="home-section">
+<div class="section-heading">
+<div><h2>Visão geral</h2><p class="muted">Encontre rapidamente o que exige atenção hoje.</p></div>
+<button class="btn secondary" id="refresh-btn" type="button">↻ Atualizar</button>
+</div>
+<div class="stats-grid" id="stats-grid"></div><article class="panel priority-panel"><div class="panel-title"><h3>⚑ Atenção prioritária</h3><p class="muted small">Vencidos e próximos do vencimento</p></div><div class="compact-list" id="prioridades-list"></div></article>
+<div class="dashboard-grid">
+<article class="panel">
+<div class="panel-title"><h3>Próximos prazos</h3></div>
+<div class="compact-list" id="proximos-prazos"></div>
+</article>
+<article class="panel">
+<div class="panel-title"><h3>Últimas atualizações</h3></div>
+<div class="compact-list" id="ultimas-atualizacoes"></div>
+</article>
+</div>
+</section>
+<section class="hidden" id="detalhes-section">
+<div class="detail-header panel">
+<div>
+<div class="eyebrow" id="det-tipo"></div>
+<h2 id="det-processo-text"></h2>
+<div class="badge" id="det-prazo-badge"></div>
+</div>
+<div class="detail-actions">
+<a class="btn secondary hidden" id="det-drive-link" rel="noopener noreferrer" target="_blank">📁 Abrir pasta</a>
+<button class="btn secondary" id="editar-caso-btn" type="button">✎ Editar caso</button>
+<button class="btn warning" id="arquivar-caso-btn" type="button">Arquivar</button>
+</div>
+</div><div aria-label="Seções do caso" class="detail-tabs" role="tablist"><button aria-selected="true" class="detail-tab active" data-tab="resumo" id="tab-resumo" role="tab" type="button">Resumo</button><button aria-selected="false" class="detail-tab" data-tab="partes" id="tab-partes" role="tab" type="button">Partes</button><button aria-selected="false" class="detail-tab" data-tab="andamentos" id="tab-andamentos" role="tab" type="button">Andamentos</button><button aria-selected="false" class="detail-tab" data-tab="historico" id="tab-historico" role="tab" type="button">Histórico</button></div>
+<div class="detail-grid" data-tab-panel="resumo" role="tabpanel">
+<article class="panel">
+<h3>Informações</h3>
+<dl class="info-list">
+<div><dt>Data inicial</dt><dd id="det-data-inicial-text">—</dd></div>
+<div><dt>Prazo final</dt><dd id="det-prazo-text">—</dd></div>
+<div><dt>Responsável</dt><dd id="det-responsavel-text">—</dd></div>
+<div><dt>Última atualização</dt><dd id="det-atualizado-text">—</dd></div>
+</dl>
+<label class="field-label">Status
+                <select id="det-status">
+<option value="pendente">Pendente</option>
+<option value="em_andamento">Em andamento</option>
+<option value="resolvido">Resolvido</option>
+<option value="enviado">Enviado</option>
+<option value="atrasado">Atrasado</option>
+</select>
+</label>
+<button class="btn primary" id="salvar-status-btn" type="button">Salvar status</button>
+</article>
+<article class="panel">
+<div class="panel-title"><h3>Comentários</h3><button class="icon-btn" id="editar-comentarios-btn" title="Editar comentários" type="button">✎</button></div>
+<div class="prewrap muted-block" id="det-comentarios-text">Sem comentários.</div>
+</article>
+</div>
+<article class="panel hidden" data-tab-panel="partes" role="tabpanel">
+<div class="panel-title">
+<div><h3>Partes</h3><p class="muted small">Clique em uma parte para editar seus dados.</p></div>
+<button class="btn secondary" id="adicionar-parte-btn" type="button">＋ Adicionar parte</button>
+</div>
+<div class="parts-list" id="det-partes-list"></div>
+</article>
+<article class="panel hidden" data-tab-panel="andamentos" role="tabpanel">
+<h3>Adicionar andamento</h3>
+<div class="andamento-input">
+<textarea id="novo-andamento" placeholder="Descreva o andamento..." rows="3"></textarea>
+<button class="btn primary" id="enviar-andamento" type="button">Registrar andamento</button>
+</div>
+</article>
+<article class="panel hidden" data-tab-panel="historico" role="tabpanel">
+<div class="panel-title"><h3>Histórico</h3><span class="muted small">Andamentos antigos e novos registros de auditoria.</span></div>
+<div class="timeline" id="andamentos-list"></div>
+</article>
+</section>
+<section class="hidden" id="admin-section">
+<div class="section-heading">
+<div><h2>Administração</h2><p class="muted">Tipos de caso, usuários e configurações do painel.</p></div>
+<button class="btn secondary" id="voltar-painel-btn" type="button">← Voltar ao painel</button>
+</div>
+<div class="dashboard-grid">
+<article class="panel">
+<div class="panel-title"><h3>Tipos de caso</h3><button class="btn secondary" id="novo-tipo-btn" type="button">＋ Novo tipo</button></div>
+<div class="admin-list" id="admin-tipos-list"></div>
+</article>
+<article class="panel">
+<div class="panel-title"><h3>Usuários</h3><button class="btn secondary" id="novo-usuario-btn" type="button">＋ Novo usuário</button></div>
+<p class="muted small">Crie, edite, bloqueie e exclua contas de acesso. A gestão do Firebase Authentication é executada com segurança por Cloud Functions.</p>
+<div class="notice hidden" id="usuarios-backend-aviso"></div>
+<div class="admin-list" id="admin-usuarios-list"></div>
+</article>
+</div>
+</section>
+</main>
+</div>
+</div>
+<div aria-modal="true" class="modal hidden" id="case-modal" role="dialog">
+<div class="modal-content modal-lg">
+<div class="modal-header"><h3 id="case-modal-title">Novo caso</h3><button class="modal-close icon-btn" type="button">×</button></div>
+<form class="modal-body" id="case-form">
+<input id="case-doc-id" type="hidden"/>
+<div class="form-grid two">
+<label>Tipo de caso<select id="case-tipo" required=""></select></label>
+<label>Número do processo<input id="case-processo" required="" type="text"/></label>
+<label>Data inicial<input id="case-data-inicial" type="date"/></label>
+<label>Prazo final<input id="case-prazo" required="" type="date"/></label>
+<label>Status<select id="case-status">
+<option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option><option value="enviado">Enviado</option><option value="resolvido">Resolvido</option><option value="atrasado">Atrasado</option>
+</select></label>
+<label>Responsável<select id="case-responsavel"><option value="">Sem responsável</option></select></label>
+</div>
+<label>Link da pasta no Google Drive<input id="case-drive-url" placeholder="https://drive.google.com/..." type="url"/></label>
+<label>Comentários<textarea id="case-comentarios" rows="4"></textarea></label>
+<div class="modal-footer"><button class="btn secondary modal-cancel" type="button">Cancelar</button><button class="btn primary" type="submit">Salvar caso</button></div>
+</form>
+</div>
+</div>
+<div aria-modal="true" class="modal hidden" id="parte-modal" role="dialog">
+<div class="modal-content modal-lg">
+<div class="modal-header"><h3 id="parte-modal-title">Parte</h3><button class="modal-close icon-btn" type="button">×</button></div>
+<form class="modal-body" id="parte-form">
+<p class="form-helper">Preencha os dados principais. Os campos adicionais aparecem conforme a situação da parte.</p><input id="parte-index" type="hidden"/>
+<div class="form-grid two">
+<label>Nome<input id="parte-nome" required="" type="text"/></label>
+<label>CPF<input id="parte-cpf" inputmode="numeric" type="text"/></label>
+<label>Status<select id="parte-status"><option value="vivo">Vivo</option><option value="falecido">Falecido</option></select></label>
+<label>Interesse<select id="parte-interesse"><option value="sim">Sim</option><option value="não">Não</option></select></label>
+<label>LP<select id="parte-lp"><option value="não">Não</option><option value="sim">Sim</option></select></label>
+</div>
+<div id="parte-vivo-fields">
+<div class="form-grid two">
+<label>Contato<select id="parte-contato"><option value="não">Não</option><option value="sim">Sim</option></select></label><div id="parte-contato-detalhes"><label>Telefone<input id="parte-telefone" type="tel"/></label><label>E-mail<input id="parte-email" type="email"/></label><label>Assinou acordo<select id="parte-assinou"><option value="não">Não</option><option value="sim">Sim</option></select></label></div>
+
+
+
+</div>
+</div>
+<div class="hidden" id="parte-falecido-fields">
+<div class="form-grid two">
+<label>Deixou bens?<select id="parte-deixou-bens"><option value="não">Não</option><option value="sim">Sim</option></select></label>
+<label>Número informado de herdeiros<input id="parte-num-herdeiros" max="99" min="0" type="number"/></label>
+</div>
+<div class="subsection-head"><h4>Herdeiros</h4><button class="btn secondary" id="add-herdeiro-btn" type="button">＋ Herdeiro</button></div>
+<div id="herdeiros-editor"></div>
+</div>
+<div class="hidden" id="parte-lp-fields">
+<h4>Informações de LP</h4>
+<div class="form-grid two"><label>Nº Processo (LP)<input id="parte-lp-processo" type="text"/></label><label>Advogado (LP)<input id="parte-lp-advogado" type="text"/></label></div>
+<label>Observações (LP)<textarea id="parte-lp-observacoes" rows="3"></textarea></label>
+</div>
+<div class="modal-footer"><button class="btn danger hidden" id="excluir-parte-btn" type="button">Excluir parte</button><span class="spacer"></span><button class="btn secondary modal-cancel" type="button">Cancelar</button><button class="btn primary" type="submit">Salvar parte</button></div>
+</form>
+</div>
+</div>
+<div aria-modal="true" class="modal hidden" id="comments-modal" role="dialog">
+<div class="modal-content">
+<div class="modal-header"><h3>Editar comentários</h3><button class="modal-close icon-btn" type="button">×</button></div>
+<div class="modal-body"><textarea id="comentarios-editor" rows="10"></textarea><div class="modal-footer"><button class="btn secondary modal-cancel" type="button">Cancelar</button><button class="btn primary" id="salvar-comentarios-btn" type="button">Salvar</button></div></div>
+</div>
+</div>
+<div aria-modal="true" class="modal hidden" id="tipo-modal" role="dialog">
+<div class="modal-content">
+<div class="modal-header"><h3>Tipo de caso</h3><button class="modal-close icon-btn" type="button">×</button></div>
+<form class="modal-body" id="tipo-form">
+<input id="tipo-id" type="hidden"/>
+<label>Nome<input id="tipo-nome" required="" type="text"/></label>
+<div class="check-grid"><label><input checked="" id="tipo-prazo" type="checkbox"/> Categorizar por prazo</label><label><input checked="" id="tipo-assinatura" type="checkbox"/> Mostrar assinatura</label><label><input checked="" id="tipo-lp" type="checkbox"/> Mostrar LP</label><label><input checked="" id="tipo-herdeiros" type="checkbox"/> Mostrar herdeiros</label></div>
+<div class="modal-footer"><button class="btn secondary modal-cancel" type="button">Cancelar</button><button class="btn primary" type="submit">Salvar</button></div>
+</form>
+</div>
+</div>
+<div aria-modal="true" class="modal hidden" id="usuario-modal" role="dialog">
+<div class="modal-content">
+<div class="modal-header"><h3 id="usuario-modal-title">Usuário</h3><button class="modal-close icon-btn" type="button">×</button></div>
+<form class="modal-body" id="usuario-form">
+<input id="usuario-id" type="hidden"/>
+<label>Nome<input id="usuario-nome" required="" type="text"/></label>
+<label>E-mail<input id="usuario-email" required="" type="email"/></label>
+<label>Perfil<select id="usuario-perfil"><option value="editor">Editor</option><option value="leitor">Somente leitura</option><option value="administrador">Administrador</option></select></label>
+<label class="toggle-line"><input checked="" id="usuario-ativo" type="checkbox"/> Conta ativa</label>
+<div class="notice" id="novo-usuario-help"><strong>Novo usuário:</strong> a conta será criada sem senha definida. Após a criação, use “Enviar senha” para que a pessoa receba o e-mail do Firebase e defina a própria senha.</div>
+<div class="modal-footer"><button class="btn secondary modal-cancel" type="button">Cancelar</button><button class="btn primary" type="submit">Salvar usuário</button></div>
+</form>
+</div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

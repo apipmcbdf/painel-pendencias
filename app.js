@@ -107,8 +107,8 @@
     const email = auth.currentUser?.email || '';
     return { uid: auth.currentUser?.uid || '', email, nome: state.currentProfile?.nome || userDisplay(email) };
   }
-  function canEdit() { return (state.currentProfile?.perfil || 'editor') !== 'leitor'; }
-  function isAdmin() { return (state.currentProfile?.perfil || '') === 'administrador'; }
+  function canEdit() { return ['administrador', 'editor'].includes(state.currentProfile?.perfil) && state.currentProfile?.ativo !== false; }
+  function isAdmin() { return state.currentProfile?.perfil === 'administrador' && state.currentProfile?.ativo !== false; }
   function statusLabel(v) { return ({ pendente:'Pendente', em_andamento:'Em andamento', resolvido:'Resolvido', enviado:'Enviado', atrasado:'Atrasado' })[v] || v || 'Pendente'; }
   function typeName(caseData) { return caseData.descricao || caseData.tipo_nome || caseData.tipo || 'Sem tipo'; }
   function getDriveUrl(caseData) { return caseData.drive_url || legacyDriveLinks[caseData.processo] || ''; }
@@ -150,7 +150,8 @@
         if (!snap.empty) profile = { id:snap.docs[0].id, ...snap.docs[0].data() };
       }
     } catch (e) { console.warn('Perfil não carregado:', e); }
-    if (!profile) profile = { nome: legacyNames[normalizeText(user.email)] || user.email, email:user.email, perfil: legacyAdmins.has(normalizeText(user.email)) ? 'administrador' : 'editor' };
+    if (!profile) profile = { nome: legacyNames[normalizeText(user.email)] || user.email, email:user.email, perfil: legacyAdmins.has(normalizeText(user.email)) ? 'administrador' : (legacyNames[normalizeText(user.email)] ? 'editor' : 'leitor') };
+    if (profile.ativo === false) { await auth.signOut(); throw new Error('Conta desativada. Contate o administrador.'); }
     state.currentProfile = profile;
   }
 
@@ -248,6 +249,7 @@
     const items=[['Pendentes',metrics.pendentes],['Urgentes',metrics.urgentes],['Vencidos',metrics.vencidos],['Enviados',metrics.enviados],['Resolvidos',metrics.resolvidos]];
     els.stats.innerHTML=''; items.forEach(([label,value])=>{const d=document.createElement('div');d.className='stat-card';const v=document.createElement('div');v.className='stat-value';v.textContent=value;const l=document.createElement('div');l.className='stat-label';l.textContent=label;d.append(v,l);els.stats.appendChild(d)});
 
+    const prioritiesEl=$('prioridades-list'); prioritiesEl.innerHTML=''; const priorityCases=active.filter(c=>c.status!=='resolvido'&&c.status!=='enviado'&&daysRemaining(c.prazo)!==null&&daysRemaining(c.prazo)<=7).sort((a,b)=>daysRemaining(a.prazo)-daysRemaining(b.prazo)).slice(0,6); if(!priorityCases.length) prioritiesEl.innerHTML='<div class="empty-state">Nenhuma pendência urgente no momento.</div>';priorityCases.forEach(c=>prioritiesEl.appendChild(compactCaseItem(c,prazoInfo(c).text)));
     els.proximos.innerHTML=''; const upcoming=active.filter(c=>c.status!=='resolvido'&&c.status!=='enviado'&&daysRemaining(c.prazo)!==null).sort((a,b)=>daysRemaining(a.prazo)-daysRemaining(b.prazo)).slice(0,8);
     if(!upcoming.length) els.proximos.innerHTML='<div class="empty-state">Nenhum prazo próximo.</div>';
     upcoming.forEach(c=>els.proximos.appendChild(compactCaseItem(c, prazoInfo(c).text)));
@@ -259,10 +261,12 @@
 
   function compactCaseItem(c, subtitle) { const row=document.createElement('div');row.className='compact-item';const left=document.createElement('div');const strong=document.createElement('strong');strong.textContent=c.processo||'Sem número';const small=document.createElement('small');small.textContent=`${typeName(c)} · ${subtitle}`;left.append(strong,small);row.append(left);row.addEventListener('click',()=>openCase(c.id));return row; }
 
+  function selectDetailTab(name) { document.querySelectorAll('[data-tab-panel]').forEach(el=>el.classList.toggle('hidden',el.dataset.tabPanel!==name));document.querySelectorAll('.detail-tab').forEach(btn=>{const active=btn.dataset.tab===name;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));}); }
+
   function showPanel(name) { els.home.classList.toggle('hidden',name!=='home'); els.details.classList.toggle('hidden',name!=='details'); els.admin.classList.toggle('hidden',name!=='admin'); }
 
   async function openCase(id) {
-    const c=state.cases.find(x=>x.id===id); if(!c)return; state.currentCaseId=id; state.currentCase=c; showPanel('details'); renderCaseList();
+    const c=state.cases.find(x=>x.id===id); if(!c)return; state.currentCaseId=id; state.currentCase=c; showPanel('details'); selectDetailTab('resumo'); renderCaseList();
     setText(els.detTipo,typeName(c),'Sem tipo'); setText(els.detProcesso,c.processo,'Sem número'); setText(els.detData,formatDate(c.data_inicial)); setText(els.detPrazo,formatDate(c.prazo));
     setText(els.detResponsavel,c.responsavel_nome || userDisplay(c.responsavel_email) || 'Sem responsável');
     setText(els.detAtualizado,updatedAt(c)?`${formatDateTime(updatedAt(c))}${c.updated_by_name?` · ${c.updated_by_name}`:''}`:'Sem registro'); els.detStatus.value=c.status||'pendente';
@@ -323,7 +327,7 @@
     $('parte-form').reset(); $('parte-index').value=index===null?'':String(index); $('parte-modal-title').textContent=index===null?'Nova parte':'Editar parte'; $('excluir-parte-btn').classList.toggle('hidden',index===null);
     const p=index===null?{}:getCurrentPart(index); $('parte-nome').value=p.nome||''; $('parte-cpf').value=p.cpf||''; $('parte-status').value=normalizeText(p.status)==='falecido'||normalizeText(p.status)==='morto'?'falecido':'vivo'; $('parte-interesse').value=p.interesse||'não'; $('parte-lp').value=p.lp||'não'; $('parte-contato').value=p.contato||'não'; $('parte-telefone').value=p.telefone||''; $('parte-email').value=p.email||''; $('parte-assinou').value=p.assinou||'não'; $('parte-deixou-bens').value=p.deixou_bens||'não'; $('parte-num-herdeiros').value=p.numero_de_herdeiros||''; $('parte-lp-processo').value=p.numero_processo_lp||''; $('parte-lp-advogado').value=p.advogado_lp||''; $('parte-lp-observacoes').value=p.observacoes_lp||''; renderHeirs(p.herdeiros||[]); toggleParteFields(); openModal('parte-modal');
   }
-  function toggleParteFields(){const deceased=$('parte-status').value==='falecido';$('parte-vivo-fields').classList.toggle('hidden',deceased);$('parte-falecido-fields').classList.toggle('hidden',!deceased);$('parte-lp-fields').classList.toggle('hidden',$('parte-lp').value!=='sim');if(!deceased&&$('parte-contato').value!=='sim'){$('parte-assinou').value='não';}}
+  function toggleParteFields(){const deceased=$('parte-status').value==='falecido';$('parte-vivo-fields').classList.toggle('hidden',deceased);$('parte-falecido-fields').classList.toggle('hidden',!deceased);$('parte-lp-fields').classList.toggle('hidden',$('parte-lp').value!=='sim');$('parte-contato-detalhes').classList.toggle('hidden',deceased||$('parte-contato').value!=='sim');if(!deceased&&$('parte-contato').value!=='sim'){$('parte-assinou').value='não';}}
   function renderHeirs(heirs) { const box=$('herdeiros-editor');box.innerHTML=''; const list=Array.isArray(heirs)?heirs:heirs?[heirs]:[]; list.forEach(h=>addHeirRow(typeof h==='object'?h:{nome:h})); }
   function addHeirRow(h={}) { const box=$('herdeiros-editor');const row=document.createElement('div');row.className='heir-row';const head=document.createElement('div');head.className='heir-head';const title=document.createElement('strong');title.textContent=`Herdeiro ${box.children.length+1}`;const rm=document.createElement('button');rm.type='button';rm.className='icon-btn';rm.textContent='×';rm.title='Remover herdeiro';rm.addEventListener('click',()=>row.remove());head.append(title,rm);const grid=document.createElement('div');grid.className='heir-grid';grid.innerHTML='<label>Nome<input class="h-nome" type="text"></label><label>CPF<input class="h-cpf" type="text"></label><label>Assinou<select class="h-assinou"><option value="não">Não</option><option value="sim">Sim</option></select></label><label>Interesse<select class="h-interesse"><option value="não">Não</option><option value="sim">Sim</option></select></label>';row.append(head,grid);box.appendChild(row);row.querySelector('.h-nome').value=h.nome||'';row.querySelector('.h-cpf').value=h.cpf||'';row.querySelector('.h-assinou').value=h.assinou||'não';row.querySelector('.h-interesse').value=h.interesse||'não'; }
   function collectHeirs(){return [...document.querySelectorAll('#herdeiros-editor .heir-row')].map(r=>({nome:r.querySelector('.h-nome').value.trim(),cpf:r.querySelector('.h-cpf').value.trim(),assinou:r.querySelector('.h-assinou').value,interesse:r.querySelector('.h-interesse').value})).filter(h=>h.nome||h.cpf);}
@@ -442,7 +446,7 @@
     const uid=$('usuario-id').value.trim();
     const payload={uid:uid||null,nome:$('usuario-nome').value.trim(),email:$('usuario-email').value.trim().toLowerCase(),perfil:$('usuario-perfil').value,disabled:!$('usuario-ativo').checked};
     try{
-      if(uid && state.usersBackendReady){
+      if(uid && !uid.startsWith('legacy_') && state.usersBackendReady){
         await callAdminFunction('adminUpdateUser',payload);
         toast('Usuário atualizado.');
       } else if(!uid){
@@ -478,7 +482,20 @@
     try{await callAdminFunction('adminDeleteUser',{uid:u.uid});toast('Usuário excluído.');await loadUsers();populateFilters();await renderAdmin();}catch(err){toast(`Erro ao excluir: ${err.message}`,'error')}
   }
 
+  function wireUiNavigation(){
+    const buttons={home:$('inicio-nav-btn'),cases:$('casos-nav-btn'),deadlines:$('prazos-nav-btn'),archive:$('arquivados-nav-btn')};
+    function activate(k){Object.entries(buttons).forEach(([name,button])=>button.classList.toggle('active',name===k));}
+    function setList(view){state.listView=view;document.querySelectorAll('.sidebar-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));applyFilters();}
+    buttons.home.addEventListener('click',()=>{showPanel('home');activate('home')});
+    buttons.cases.addEventListener('click',()=>{setList('ativos');els.filtroPrazo.value='';els.filtroStatus.value='';applyFilters();showPanel('home');activate('cases');els.busca.focus()});
+    buttons.deadlines.addEventListener('click',()=>{setList('ativos');els.filtroStatus.value='';els.filtroPrazo.value='7';applyFilters();showPanel('home');activate('deadlines');$('prioridades-list').scrollIntoView({block:'start',behavior:'smooth'})});
+    buttons.archive.addEventListener('click',()=>{setList('arquivados');els.filtroPrazo.value='';els.filtroStatus.value='';applyFilters();showPanel('home');activate('archive')});
+    $('limpar-filtros-btn').addEventListener('click',()=>{els.busca.value='';[els.filtroStatus,els.filtroTipo,els.filtroResponsavel,els.filtroPrazo].forEach(el=>el.value='');applyFilters()});
+    document.querySelectorAll('.detail-tab').forEach(btn=>btn.addEventListener('click',()=>selectDetailTab(btn.dataset.tab)));
+  }
+
   function wireEvents(){
+    wireUiNavigation();
     els.loginForm.addEventListener('submit',async e=>{e.preventDefault();els.loginError.textContent='';try{await auth.signInWithEmailAndPassword(els.email.value.trim(),els.password.value);}catch(err){els.loginError.textContent='Usuário ou senha inválidos.';console.error(err)}});
     els.logout.addEventListener('click',()=>auth.signOut()); els.novoCaso.addEventListener('click',()=>openCaseModal()); els.refresh.addEventListener('click',async()=>{await Promise.all([loadUsers(),loadTypes()]);await loadCases();toast('Dados atualizados.')});
     [els.busca,els.filtroStatus,els.filtroTipo,els.filtroResponsavel,els.filtroPrazo].forEach(el=>el.addEventListener(el===els.busca?'input':'change',applyFilters));

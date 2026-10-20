@@ -38,44 +38,50 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/usuarios/$(request.auth.token.email)).data.perfil;
     }
 
+    function hasAccess() {
+      return signedIn() && ((!hasUidProfile() && !hasEmailProfile() && legacyEditor())
+        || (hasUidProfile() && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.ativo != false)
+        || (!hasUidProfile() && hasEmailProfile() && get(/databases/$(database)/documents/usuarios/$(request.auth.token.email)).data.ativo != false));
+    }
+
     function isAdmin() {
-      return legacyAdmin()
-        || (hasUidProfile() && uidRole() == 'administrador')
-        || (hasEmailProfile() && emailRole() == 'administrador');
+      return (!hasUidProfile() && !hasEmailProfile() && legacyAdmin())
+        || (hasUidProfile() && hasAccess() && uidRole() == 'administrador')
+        || (!hasUidProfile() && hasEmailProfile() && hasAccess() && emailRole() == 'administrador');
     }
 
     function canEdit() {
-      return legacyEditor()
-        || (hasUidProfile() && uidRole() in ['administrador', 'editor'])
-        || (hasEmailProfile() && emailRole() in ['administrador', 'editor']);
+      return (!hasUidProfile() && !hasEmailProfile() && legacyEditor())
+        || (hasUidProfile() && hasAccess() && uidRole() in ['administrador', 'editor'])
+        || (!hasUidProfile() && hasEmailProfile() && hasAccess() && emailRole() in ['administrador', 'editor']);
     }
 
     match /pendencias/{caseId} {
-      allow read: if signedIn();
+      allow read: if hasAccess();
       allow create, update: if canEdit();
       allow delete: if false;
 
       match /andamentos/{docId} {
-        allow read: if signedIn();
+        allow read: if hasAccess();
         allow create: if canEdit();
         allow update, delete: if false;
       }
 
       match /historico/{docId} {
-        allow read: if signedIn();
+        allow read: if hasAccess();
         allow create: if canEdit();
         allow update, delete: if false;
       }
     }
 
     match /tipos_caso/{docId} {
-      allow read: if signedIn();
+      allow read: if hasAccess();
       allow create, update: if isAdmin();
       allow delete: if false;
     }
 
     match /usuarios/{docId} {
-      allow read: if signedIn();
+      allow read: if hasAccess();
       allow create, update: if isAdmin();
       // Exclusão de conta/perfil é feita somente pela Cloud Function administrativa.
       allow delete: if false;
