@@ -265,7 +265,7 @@
 
   function selectDetailTab(name) { document.querySelectorAll('[data-tab-panel]').forEach(el=>el.classList.toggle('hidden',el.dataset.tabPanel!==name));document.querySelectorAll('.detail-tab').forEach(btn=>{const active=btn.dataset.tab===name;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));}); }
 
-  function showPanel(name) { els.home.classList.toggle('hidden',name!=='home'); els.details.classList.toggle('hidden',name!=='details'); els.admin.classList.toggle('hidden',name!=='admin'); $('relatorios-section').classList.toggle('hidden',name!=='report'); }
+  function showPanel(name) { $('casos-section').classList.toggle('hidden',name!=='cases'); els.home.classList.toggle('hidden',name!=='home'); els.details.classList.toggle('hidden',name!=='details'); els.admin.classList.toggle('hidden',name!=='admin'); $('relatorios-section').classList.toggle('hidden',name!=='report'); }
 
   async function openCase(id) {
     const c=state.cases.find(x=>x.id===id); if(!c)return; state.currentCaseId=id; state.currentCase=c; showPanel('details'); selectDetailTab('resumo'); renderCaseList();
@@ -549,14 +549,18 @@
   }
 
   function wireUiNavigation(){
-    const buttons={home:$('inicio-nav-btn'),cases:$('casos-nav-btn'),deadlines:$('prazos-nav-btn'),archive:$('arquivados-nav-btn'),report:$('relatorios-nav-btn')};
+    const buttons={home:$('inicio-nav-btn'),cases:$('casos-nav-btn'),report:$('relatorios-nav-btn')};
     function activate(k){Object.entries(buttons).forEach(([name,button])=>button.classList.toggle('active',name===k));}
     function setList(view){state.listView=view;document.querySelectorAll('.sidebar-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));applyFilters();}
+    function openCases({view='ativos',status='',prazo=''}={}){
+      setList(view);els.filtroStatus.value=status;els.filtroPrazo.value=prazo;applyFilters();
+      showPanel('cases');activate('cases');
+    }
     buttons.home.addEventListener('click',()=>{showPanel('home');activate('home')});
-    buttons.cases.addEventListener('click',()=>{setList('ativos');els.filtroPrazo.value='';els.filtroStatus.value='';applyFilters();showPanel('home');activate('cases');els.busca.focus()});
-    buttons.deadlines.addEventListener('click',()=>{setList('ativos');els.filtroStatus.value='';els.filtroPrazo.value='7';applyFilters();showPanel('home');activate('deadlines');$('prioridades-list').scrollIntoView({block:'start',behavior:'smooth'})});
-    buttons.archive.addEventListener('click',()=>{setList('arquivados');els.filtroPrazo.value='';els.filtroStatus.value='';applyFilters();showPanel('home');activate('archive')});
+    buttons.cases.addEventListener('click',()=>openCases());
     buttons.report.addEventListener('click',()=>{showPanel('report');activate('report');renderReport()});
+    $('home-vencidos-btn').addEventListener('click',()=>openCases({status:'vencido'}));
+    $('home-prazos-btn').addEventListener('click',()=>openCases({prazo:'7'}));
     $('limpar-filtros-btn').addEventListener('click',()=>{els.busca.value='';[els.filtroStatus,els.filtroTipo,els.filtroResponsavel,els.filtroPrazo].forEach(el=>el.value='');applyFilters()});
     document.querySelectorAll('.detail-tab').forEach(btn=>btn.addEventListener('click',()=>selectDetailTab(btn.dataset.tab)));
   }

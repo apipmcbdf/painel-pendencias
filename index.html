@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Painel de Pendências</title>
-<link href="style.css?v=20261020r1" rel="stylesheet"/>
+<link href="style.css?v=20261020nav2" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -31,6 +31,7 @@
 <small id="topbar-subtitle">Gestão de casos, partes, prazos e andamentos</small>
 </div>
 <div class="topbar-actions">
+<button class="btn primary" id="novo-caso-btn" type="button">＋ Novo caso</button>
 <span class="user-chip" id="current-user-label"></span>
 <button class="btn ghost hidden" id="admin-nav-btn" type="button">Administração</button>
 <button class="btn ghost" id="logout-btn" type="button">Sair</button>
@@ -38,11 +39,35 @@
 </header>
 <div class="workspace">
 <aside class="sidebar" id="sidebar">
-<nav aria-label="Navegação principal" class="main-nav"><button class="main-nav-link active" id="inicio-nav-btn" type="button">⌂ Início</button><button class="main-nav-link" id="casos-nav-btn" type="button">▤ Casos ativos</button><button class="main-nav-link" id="prazos-nav-btn" type="button">◷ Prazos</button><button class="main-nav-link" id="arquivados-nav-btn" type="button">▣ Arquivados</button><button class="main-nav-link" id="relatorios-nav-btn" type="button">▤ Relatórios</button></nav><div class="sidebar-actions">
-<button class="btn primary full" id="novo-caso-btn" type="button">＋ Novo caso</button>
-<div class="search-box">
-<input id="busca-global" placeholder="Buscar processo, nome, CPF, telefone..." type="search"/>
+<nav aria-label="Navegação principal" class="main-nav">
+<button class="main-nav-link active" id="inicio-nav-btn" type="button">⌂ Início</button>
+<button class="main-nav-link" id="casos-nav-btn" type="button">▤ Casos</button>
+<button class="main-nav-link" id="relatorios-nav-btn" type="button">▥ Relatórios</button>
+</nav>
+<p class="nav-tip">Acompanhe prioridades no Início. Consulte e filtre processos em Casos.</p>
+</aside>
+<main class="content" id="content">
+<section id="home-section">
+<div class="section-heading">
+<div><h2>Visão geral</h2><p class="muted">Encontre rapidamente o que exige atenção hoje.</p></div>
+<div class="heading-actions"><button class="btn secondary" id="home-vencidos-btn" type="button">Vencidos</button><button class="btn secondary" id="home-prazos-btn" type="button">Próximos 7 dias</button><button class="btn secondary" id="refresh-btn" type="button">↻ Atualizar</button></div>
 </div>
+<div class="stats-grid" id="stats-grid"></div><article class="panel priority-panel"><div class="panel-title"><h3>⚑ Atenção prioritária</h3><p class="muted small">Vencidos e próximos do vencimento</p></div><div class="compact-list" id="prioridades-list"></div></article>
+<div class="dashboard-grid">
+<article class="panel">
+<div class="panel-title"><h3>Próximos prazos</h3></div>
+<div class="compact-list" id="proximos-prazos"></div>
+</article>
+<article class="panel">
+<div class="panel-title"><h3>Últimas atualizações</h3></div>
+<div class="compact-list" id="ultimas-atualizacoes"></div>
+</article>
+</div>
+</section>
+<section class="hidden" id="casos-section">
+<div class="section-heading"><div><h2>Casos</h2><p class="muted">Pesquise, filtre e abra os processos cadastrados.</p></div></div>
+<div class="panel case-filters-panel"><div class="search-box">
+<input id="busca-global" placeholder="Buscar processo, nome, CPF, telefone..." type="search"/>
 </div>
 <details class="advanced-filters"><summary>Filtros avançados</summary><div class="filter-grid">
 <select aria-label="Filtrar por status" id="filtro-status">
@@ -64,29 +89,13 @@
 <option value="30">Próximos 30 dias</option>
 </select>
 </div><button class="btn secondary full" id="limpar-filtros-btn" type="button">Limpar filtros</button></details>
-<div class="sidebar-tabs">
+</div>
+<div class="panel case-results-panel"><div class="sidebar-tabs">
 <button class="sidebar-tab active" data-view="ativos" type="button">Ativos</button>
 <button class="sidebar-tab" data-view="arquivados" type="button">Arquivados</button>
 </div>
 <div class="list-count" id="lista-contagem"></div>
 <div class="case-list" id="pendencias-list"></div>
-</aside>
-<main class="content" id="content">
-<section id="home-section">
-<div class="section-heading">
-<div><h2>Visão geral</h2><p class="muted">Encontre rapidamente o que exige atenção hoje.</p></div>
-<button class="btn secondary" id="refresh-btn" type="button">↻ Atualizar</button>
-</div>
-<div class="stats-grid" id="stats-grid"></div><article class="panel priority-panel"><div class="panel-title"><h3>⚑ Atenção prioritária</h3><p class="muted small">Vencidos e próximos do vencimento</p></div><div class="compact-list" id="prioridades-list"></div></article>
-<div class="dashboard-grid">
-<article class="panel">
-<div class="panel-title"><h3>Próximos prazos</h3></div>
-<div class="compact-list" id="proximos-prazos"></div>
-</article>
-<article class="panel">
-<div class="panel-title"><h3>Últimas atualizações</h3></div>
-<div class="compact-list" id="ultimas-atualizacoes"></div>
-</article>
 </div>
 </section>
 <section class="hidden" id="relatorios-section">
@@ -270,6 +279,6 @@
 </form>
 </div>
 </div>
-<script src="app.js?v=20261020r1"></script>
+<script src="app.js?v=20261020nav2"></script>
 </body>
 </html>
