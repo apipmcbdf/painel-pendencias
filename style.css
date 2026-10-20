@@ -44,3 +44,14 @@
 
 /* Visão geral por tipo de caso */
 .case-type-section{margin-bottom:18px}.type-heading{margin-bottom:12px}.type-heading h3{margin:0}.type-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.type-overview-card{margin:0;min-width:0}.type-overview-head,.type-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.type-overview-head h4{font-size:1.02rem;margin:0;overflow-wrap:anywhere}.type-count{font-size:.82rem;font-weight:650;color:var(--muted)}.type-summary{margin-top:12px;font-size:.81rem;color:var(--muted)}.overdue-text{color:#b42318!important;font-weight:700}.type-case-list .compact-item{min-width:0}.type-case-list .compact-item strong{overflow-wrap:anywhere}.type-view-all{width:100%;margin-top:12px}.compact-item:focus-visible{outline:2px solid #2563eb;outline-offset:2px}@media(max-width:900px){.type-overview-grid{grid-template-columns:1fr}}
+
+/* Resumo do caso: tres areas lado a lado, historico sempre abaixo */
+.case-overview-columns{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.case-overview-columns>.panel{min-width:0;margin-bottom:16px;overflow-wrap:anywhere}
+.case-overview-columns .info-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.case-overview-columns .info-list div{min-width:0}
+.case-overview-columns .panel-title{flex-wrap:wrap}
+.case-overview .case-history{grid-column:1/-1;width:100%;clear:both}
+.case-overview-columns .parts-list{margin-top:12px}
+@media(max-width:1350px){.case-overview-columns{grid-template-columns:repeat(2,minmax(0,1fr))}.case-overview-columns>.panel:last-child{grid-column:1/-1}}
+@media(max-width:850px){.case-overview-columns{grid-template-columns:minmax(0,1fr)}.case-overview-columns>.panel:last-child{grid-column:auto}}

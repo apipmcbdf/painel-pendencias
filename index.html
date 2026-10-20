@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Painel de Pendências</title>
-<link href="style.css?v=20261020status1" rel="stylesheet"/>
+<link href="style.css?v=20261020-resumo2" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -126,8 +126,9 @@
 <button class="btn secondary" id="editar-caso-btn" type="button">✎ Editar caso</button>
 <button class="btn warning" id="arquivar-caso-btn" type="button">Arquivar</button>
 </div>
-</div><div aria-label="Seções do caso" class="detail-tabs" role="tablist"><button aria-selected="true" class="detail-tab active" data-tab="resumo" id="tab-resumo" role="tab" type="button">Resumo</button><button aria-selected="false" class="detail-tab" data-tab="partes" id="tab-partes" role="tab" type="button">Partes</button><button aria-selected="false" class="detail-tab" data-tab="andamentos" id="tab-andamentos" role="tab" type="button">Andamentos</button><button aria-selected="false" class="detail-tab" data-tab="historico" id="tab-historico" role="tab" type="button">Histórico</button></div>
-<div class="detail-grid" data-tab-panel="resumo" role="tabpanel">
+</div><div aria-label="Seções do caso" class="detail-tabs" role="tablist"><button aria-selected="true" class="detail-tab active" data-tab="resumo" id="tab-resumo" role="tab" type="button">Resumo</button><button aria-selected="false" class="detail-tab" data-tab="andamentos" id="tab-andamentos" role="tab" type="button">Andamentos</button></div>
+<div class="case-overview" data-tab-panel="resumo" role="tabpanel">
+<div class="case-overview-columns">
 <article class="panel">
 <h3>Informações</h3>
 <dl class="info-list">
@@ -152,14 +153,20 @@
 <div class="panel-title"><h3>Comentários</h3><button class="icon-btn" id="editar-comentarios-btn" title="Editar comentários" type="button">✎</button></div>
 <div class="prewrap muted-block" id="det-comentarios-text">Sem comentários.</div>
 </article>
-</div>
-<article class="panel hidden" data-tab-panel="partes" role="tabpanel">
+
+<article class="panel">
 <div class="panel-title">
 <div><h3>Partes</h3><p class="muted small">Clique em uma parte para editar seus dados.</p></div>
 <button class="btn secondary" id="adicionar-parte-btn" type="button">＋ Adicionar parte</button>
 </div>
 <div class="parts-list" id="det-partes-list"></div>
 </article>
+</div>
+<article class="panel case-history">
+<div class="panel-title"><h3>Histórico</h3><span class="muted small">Andamentos antigos e novos registros de auditoria.</span></div>
+<div class="timeline" id="andamentos-list"></div>
+</article>
+</div>
 <article class="panel hidden" data-tab-panel="andamentos" role="tabpanel">
 <h3>Adicionar andamento</h3>
 <div class="andamento-input">
@@ -167,10 +174,7 @@
 <button class="btn primary" id="enviar-andamento" type="button">Registrar andamento</button>
 </div>
 </article>
-<article class="panel hidden" data-tab-panel="historico" role="tabpanel">
-<div class="panel-title"><h3>Histórico</h3><span class="muted small">Andamentos antigos e novos registros de auditoria.</span></div>
-<div class="timeline" id="andamentos-list"></div>
-</article>
+
 </section>
 <section class="hidden" id="admin-section">
 <div class="section-heading">
