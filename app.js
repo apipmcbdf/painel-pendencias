@@ -317,7 +317,7 @@
 
   async function openCase(id) {
     const c=state.cases.find(x=>x.id===id); if(!c)return; state.currentCaseId=id; state.currentCase=c; showPanel('details'); selectDetailTab('resumo'); renderCaseList();
-    setText(els.detTipo,typeName(c),'Sem tipo'); setText(els.detProcesso,c.processo,'Sem número'); setText(els.detData,formatDate(c.data_inicial)); setText(els.detPrazo,formatDate(c.prazo));
+    setText(els.detTipo,typeName(c),'Sem tipo'); setText($('det-assunto-text'),c.assunto||'Não informado'); setText(els.detProcesso,c.processo,'Sem número'); setText(els.detData,formatDate(c.data_inicial)); setText(els.detPrazo,formatDate(c.prazo));
     setText(els.detResponsavel,c.responsavel_nome || userDisplay(c.responsavel_email) || 'Sem responsável');
     setText(els.detAtualizado,updatedAt(c)?`${formatDateTime(updatedAt(c))}${c.updated_by_name?` · ${c.updated_by_name}`:''}`:'Sem registro'); els.detStatus.value=c.status||'pendente';
     const pi=prazoInfo(c); els.detPrazoBadge.className=`badge ${pi.cls}`; els.detPrazoBadge.textContent=pi.text;
@@ -356,7 +356,7 @@
   }
   function openCaseModal(c=null) {
     fillCaseSelects(); $('case-form').reset(); $('case-doc-id').value=c?.id||''; $('case-modal-title').textContent=c?'Editar caso':'Novo caso';
-    $('case-tipo').value=typeName(c||{})==='Sem tipo'?'':typeName(c||{}); $('case-processo').value=c?.processo||''; $('case-data-inicial').value=toInputDate(c?.data_inicial); $('case-prazo').value=toInputDate(c?.prazo); $('case-status').value=c?.status||'pendente'; $('case-drive-url').value=getDriveUrl(c||{}); $('case-comentarios').value=c?.comentarios||'';
+    $('case-tipo').value=typeName(c||{})==='Sem tipo'?'':typeName(c||{}); $('case-assunto').value=['Auxílio-moradia','VPE'].includes(c?.assunto)?c.assunto:''; $('case-processo').value=c?.processo||''; $('case-data-inicial').value=toInputDate(c?.data_inicial); $('case-prazo').value=toInputDate(c?.prazo); $('case-status').value=c?.status||'pendente'; $('case-drive-url').value=getDriveUrl(c||{}); $('case-comentarios').value=c?.comentarios||'';
     if(c?.responsavel_email) $('case-responsavel').value=c.responsavel_email;
     openModal('case-modal');
   }
@@ -364,7 +364,7 @@
 
   async function saveCase(e) {
     e.preventDefault(); if(!canEdit())return; const id=$('case-doc-id').value; const respEmail=$('case-responsavel').value; const respUser=state.users.find(u=>(u.email||u.id)===respEmail); const u=currentUserInfo();
-    const payload={descricao:$('case-tipo').value,processo:$('case-processo').value.trim(),data_inicial:$('case-data-inicial').value||null,prazo:$('case-prazo').value||null,status:$('case-status').value,drive_url:$('case-drive-url').value.trim(),comentarios:$('case-comentarios').value.trim(),responsavel_email:respEmail||'',responsavel_nome:respUser?.nome||'',...updateMetadata()};
+    const payload={descricao:$('case-tipo').value,assunto:$('case-assunto').value,processo:$('case-processo').value.trim(),data_inicial:$('case-data-inicial').value||null,prazo:$('case-prazo').value||null,status:$('case-status').value,drive_url:$('case-drive-url').value.trim(),comentarios:$('case-comentarios').value.trim(),responsavel_email:respEmail||'',responsavel_nome:respUser?.nome||'',...updateMetadata()};
     try{
       if(id){await db.collection('pendencias').doc(id).update(payload);await audit(id,'Dados gerais do caso atualizados.');toast('Caso atualizado.');}
       else{payload.partes=[];payload.arquivado=false;payload.created_at=firebase.firestore.FieldValue.serverTimestamp();payload.created_by_uid=u.uid;payload.created_by_email=u.email;payload.created_by_name=u.nome;const ref=await db.collection('pendencias').add(payload);await audit(ref.id,'Caso criado.');state.currentCaseId=ref.id;toast('Caso criado com sucesso.');}
@@ -534,7 +534,7 @@
 
 
   // Relatório calculado localmente com os casos já autorizados pelo Firebase.
-  const reportFields=['busca','status','tipo','responsavel','arquivo','prazo','inicio','fim'];
+  const reportFields=['busca','status','tipo','assunto','responsavel','arquivo','prazo','inicio','fim'];
   let reportRows=[];
   function populateReportOptions(){
     for(const [source,target] of [[els.filtroTipo,$('relatorio-tipo')],[els.filtroResponsavel,$('relatorio-responsavel')]]){
@@ -552,6 +552,7 @@
       if(filters.busca&&!caseSearchText(c).includes(normalizeText(filters.busca)))return false;
       if(filters.status&&c.status!==filters.status)return false;
       if(filters.tipo&&typeName(c)!==filters.tipo)return false;
+      if(filters.assunto && (filters.assunto==='__sem__' ? Boolean(c.assunto) : c.assunto!==filters.assunto))return false;
       if(filters.responsavel&&![c.responsavel_email,c.responsavel_nome].includes(filters.responsavel))return false;
       const remaining=daysRemaining(c.prazo),date=reportDateKey(c.prazo);
       if(filters.prazo==='vencidos'&&!(remaining!==null&&remaining<0&&!['resolvido','enviado'].includes(c.status)))return false;
@@ -574,17 +575,17 @@
       else if(days!==null&&days<0)expired++;
       else if(days!==null&&days<=7)upcoming++;
       const row=document.createElement('tr');
-      [c.processo||'—',typeName(c),statusLabel(c.status),c.responsavel_nome||userDisplay(c.responsavel_email)||'—',formatDate(c.prazo),prazoInfo(c).text,c.arquivado?'Arquivado':'Ativo'].forEach(t=>reportCell(row,t));
+      [c.processo||'—',typeName(c),c.assunto||'Não informado',statusLabel(c.status),c.responsavel_nome||userDisplay(c.responsavel_email)||'—',formatDate(c.prazo),prazoInfo(c).text,c.arquivado?'Arquivado':'Ativo'].forEach(t=>reportCell(row,t));
       body.appendChild(row);
     }
-    if(!reportRows.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=7;cell.className='report-empty';cell.textContent='Nenhuma pendência encontrada com esses filtros.';row.appendChild(cell);body.appendChild(row);}
+    if(!reportRows.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=8;cell.className='report-empty';cell.textContent='Nenhuma pendência encontrada com esses filtros.';row.appendChild(cell);body.appendChild(row);}
     $('relatorio-contagem').textContent=`${reportRows.length} registro(s)`;
     $('relatorio-resumo').replaceChildren(...[['Total',reportRows.length],['Vencidos',expired],['Próximos 7 dias',upcoming],['Enviados / resolvidos',completed]].map(([label,n])=>{const div=document.createElement('div');div.className='report-stat';const strong=document.createElement('strong');strong.textContent=n;const span=document.createElement('span');span.textContent=label;div.append(strong,span);return div;}));
   }
   function csvValue(value){const str=String(value??'').replace(/^[\s]*[=+@\-\t\r]/,match=>"'"+match);return '"'+str.replace(/"/g,'""')+'"';}
   function exportReportCsv(){
     renderReport();
-    const rows=[['Processo','Tipo','Situação','Responsável','Prazo','Condição','Arquivo'],...reportRows.map(c=>[c.processo||'',typeName(c),statusLabel(c.status),c.responsavel_nome||userDisplay(c.responsavel_email)||'',formatDate(c.prazo),prazoInfo(c).text,c.arquivado?'Arquivado':'Ativo'])];
+    const rows=[['Processo','Tipo','Assunto','Situação','Responsável','Prazo','Condição','Arquivo'],...reportRows.map(c=>[c.processo||'',typeName(c),c.assunto||'Não informado',statusLabel(c.status),c.responsavel_nome||userDisplay(c.responsavel_email)||'',formatDate(c.prazo),prazoInfo(c).text,c.arquivado?'Arquivado':'Ativo'])];
     const content='\ufeff'+rows.map(row=>row.map(csvValue).join(';')).join('\r\n');
     const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8;'}));
     const a=document.createElement('a');a.href=url;a.download='relatorio-pendencias-'+reportDateKey(new Date())+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);

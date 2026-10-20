@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Painel de Pendências</title>
-<link href="style.css?v=20261020types1" rel="stylesheet"/>
+<link href="style.css?v=20261020assunto1" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -105,13 +105,14 @@
 <label>Busca por processo, nome ou CPF<input id="relatorio-busca" type="search" placeholder="Pesquisar nos casos"/></label>
 <label>Situação<select id="relatorio-status"><option value="">Todas</option><option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option><option value="enviado">Enviado</option><option value="resolvido">Resolvido</option><option value="atrasado">Atrasado</option></select></label>
 <label>Tipo<select id="relatorio-tipo"><option value="">Todos</option></select></label>
+<label>Assunto<select id="relatorio-assunto"><option value="">Todos</option><option value="Auxílio-moradia">Auxílio-moradia</option><option value="VPE">VPE</option><option value="__sem__">Não informado</option></select></label>
 <label>Responsável<select id="relatorio-responsavel"><option value="">Todos</option></select></label>
 <label>Casos<select id="relatorio-arquivo"><option value="ativos">Somente ativos</option><option value="arquivados">Somente arquivados</option><option value="todos">Ativos e arquivados</option></select></label>
 <label>Condição do prazo<select id="relatorio-prazo"><option value="">Todos os prazos</option><option value="vencidos">Vencidos e não concluídos</option><option value="hoje">Vencem hoje</option><option value="7">Vencem nos próximos 7 dias</option><option value="15">Vencem nos próximos 15 dias</option><option value="30">Vencem nos próximos 30 dias</option><option value="sem">Sem prazo</option></select></label>
 <label>Prazo inicial<input id="relatorio-inicio" type="date"/></label><label>Prazo final<input id="relatorio-fim" type="date"/></label>
 </div><div class="report-actions"><button class="btn secondary" id="relatorio-limpar-btn" type="button">Limpar filtros</button></div></div>
 <div class="report-summary" id="relatorio-resumo" aria-live="polite"></div>
-<div class="panel"><div class="panel-title"><h3>Resultados</h3><span class="muted small" id="relatorio-contagem"></span></div><div class="report-table-scroll"><table class="report-table"><thead><tr><th>Processo</th><th>Tipo</th><th>Situação</th><th>Responsável</th><th>Prazo</th><th>Condição</th><th>Arquivo</th></tr></thead><tbody id="relatorio-linhas"></tbody></table></div></div>
+<div class="panel"><div class="panel-title"><h3>Resultados</h3><span class="muted small" id="relatorio-contagem"></span></div><div class="report-table-scroll"><table class="report-table"><thead><tr><th>Processo</th><th>Tipo</th><th>Assunto</th><th>Situação</th><th>Responsável</th><th>Prazo</th><th>Condição</th><th>Arquivo</th></tr></thead><tbody id="relatorio-linhas"></tbody></table></div></div>
 </section>
 <section class="hidden" id="detalhes-section">
 <div class="detail-header panel">
@@ -130,6 +131,7 @@
 <article class="panel">
 <h3>Informações</h3>
 <dl class="info-list">
+<div><dt>Assunto</dt><dd id="det-assunto-text">—</dd></div>
 <div><dt>Data inicial</dt><dd id="det-data-inicial-text">—</dd></div>
 <div><dt>Prazo final</dt><dd id="det-prazo-text">—</dd></div>
 <div><dt>Responsável</dt><dd id="det-responsavel-text">—</dd></div>
@@ -198,6 +200,7 @@
 <input id="case-doc-id" type="hidden"/>
 <div class="form-grid two">
 <label>Tipo de caso<select id="case-tipo" required=""></select></label>
+<label>Assunto<select id="case-assunto"><option value="">Não informado</option><option value="Auxílio-moradia">Auxílio-moradia</option><option value="VPE">VPE</option></select></label>
 <label>Número do processo<input id="case-processo" required="" type="text"/></label>
 <label>Data inicial<input id="case-data-inicial" type="date"/></label>
 <label>Prazo final<input id="case-prazo" required="" type="date"/></label>
@@ -280,6 +283,6 @@
 </form>
 </div>
 </div>
-<script src="app.js?v=20261020types1"></script>
+<script src="app.js?v=20261020assunto1"></script>
 </body>
 </html>
