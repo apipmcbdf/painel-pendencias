@@ -431,21 +431,15 @@
       aviso.classList.add('hidden');
     } catch (err) {
       state.authUsers = [];
-      aviso.textContent = 'Gestão completa de contas indisponível até as Cloud Functions serem implantadas. Os perfis do Firestore continuam visíveis.';
+      aviso.textContent = 'Não foi possível consultar o Firebase Authentication. Implante as Cloud Functions para gerenciar contas. Nenhum perfil antigo será exibido como conta ativa.';
       aviso.classList.remove('hidden');
       console.warn('Cloud Functions de usuários indisponíveis:', err);
     }
   }
 
   function mergeAdminUsers() {
-    const byEmail = new Map();
-    state.users.forEach(u => byEmail.set(normalizeText(u.email), { ...u, sourceProfile:true }));
-    state.authUsers.forEach(a => {
-      const key = normalizeText(a.email);
-      const p = byEmail.get(key) || {};
-      byEmail.set(key, { ...p, ...a, id: a.uid || p.id, uid:a.uid, sourceAuth:true, perfil:p.perfil || a.perfil || 'editor', nome:p.nome || a.displayName || a.email });
-    });
-    return [...byEmail.values()].sort((a,b)=>(a.nome||a.email||'').localeCompare(b.nome||b.email||'', 'pt-BR'));
+    // Authentication is authoritative. Firestore-only and legacy entries are not accounts.
+    return [...state.authUsers].sort((a,b)=>(a.nome||a.email||'').localeCompare(b.nome||b.email||'', 'pt-BR'));
   }
 
   async function renderAdmin(){
@@ -464,6 +458,7 @@
     await loadAuthUsers();
     list.innerHTML='';
     const users=mergeAdminUsers();
+    $('novo-usuario-btn').disabled=!state.usersBackendReady;
     if(!users.length){list.innerHTML='<div class="empty-state">Nenhum usuário cadastrado.</div>';return;}
 
     users.forEach(u=>{
@@ -475,7 +470,7 @@
       title.append(s,badge);
       const m=document.createElement('div');m.className='meta';
       const last=u.lastSignInTime?` · Último acesso: ${new Date(u.lastSignInTime).toLocaleString('pt-BR')}`:'';
-      m.textContent=`${u.email||'—'} · ${u.perfil||'editor'}${u.sourceAuth?'':' · sem conta Auth'}${last}`;
+      m.textContent=`${u.email||'—'} · ${u.perfil||'leitor'}${u.sourceAuth?'':' · sem conta Auth'}${last}`;
       l.append(title,m);
       const a=document.createElement('div');a.className='admin-actions wrap';
       const edit=document.createElement('button');edit.className='btn secondary';edit.textContent='Editar';edit.addEventListener('click',()=>openUserModal(u));a.append(edit);
@@ -496,11 +491,11 @@
     $('usuario-id').value=u?.uid||u?.id||'';
     $('usuario-nome').value=u?.nome||u?.displayName||'';
     $('usuario-email').value=u?.email||'';
-    $('usuario-perfil').value=u?.perfil||'editor';
+    $('usuario-perfil').value=u?.perfil||'leitor';
     $('usuario-ativo').checked=u?.disabled!==true;
     $('usuario-modal-title').textContent=u?'Editar usuário':'Novo usuário';
     $('novo-usuario-help').classList.toggle('hidden',!!u);
-    $('usuario-email').disabled=!!u?.sourceAuth;
+    $('usuario-email').disabled=!!u;
     openModal('usuario-modal');
   }
 
@@ -509,16 +504,13 @@
     const uid=$('usuario-id').value.trim();
     const payload={uid:uid||null,nome:$('usuario-nome').value.trim(),email:$('usuario-email').value.trim().toLowerCase(),perfil:$('usuario-perfil').value,disabled:!$('usuario-ativo').checked};
     try{
-      if(uid && !uid.startsWith('legacy_') && state.usersBackendReady){
+      if(uid) {
+        if(!state.authUsers.some(u=>u.uid===uid)) throw new Error('Conta não encontrada no Authentication. Atualize a lista.');
         await callAdminFunction('adminUpdateUser',payload);
         toast('Usuário atualizado.');
-      } else if(!uid){
+      } else {
         await callAdminFunction('adminCreateUser',payload);
         toast('Usuário criado. Agora envie o e-mail de senha.');
-      } else {
-        const id=uid.startsWith('legacy_')?payload.email:uid;
-        await db.collection('usuarios').doc(id).set({nome:payload.nome,email:payload.email,perfil:payload.perfil,updated_at:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-        toast('Perfil atualizado.');
       }
       closeModal('usuario-modal');await loadUsers();populateFilters();await renderAdmin();
     }catch(err){toast(`Erro ao salvar usuário: ${err.message}`,'error')}
@@ -535,7 +527,7 @@
     if(u.uid===auth.currentUser?.uid){toast('Você não pode bloquear a própria conta.','error');return;}
     const next=!u.disabled;
     if(!confirm(`${next?'Bloquear':'Ativar'} o acesso de ${u.email}?`))return;
-    try{await callAdminFunction('adminUpdateUser',{uid:u.uid,nome:u.nome||u.displayName||'',email:u.email,perfil:u.perfil||'editor',disabled:next});toast(next?'Usuário bloqueado.':'Usuário ativado.');await loadUsers();await renderAdmin();}catch(err){toast(err.message,'error')}
+    try{await callAdminFunction('adminUpdateUser',{uid:u.uid,nome:u.nome||u.displayName||'',email:u.email,perfil:u.perfil||'leitor',disabled:next});toast(next?'Usuário bloqueado.':'Usuário ativado.');await loadUsers();await renderAdmin();}catch(err){toast(err.message,'error')}
   }
 
   async function deleteUserAccount(u){

@@ -13,8 +13,8 @@ function normalizeEmail(value) {
 }
 
 function cleanRole(value) {
-  const role = String(value || 'editor').toLowerCase();
-  return VALID_ROLES.has(role) ? role : 'editor';
+  const role = String(value || 'leitor').toLowerCase();
+  return VALID_ROLES.has(role) ? role : 'leitor';
 }
 
 async function getProfileForAuthUser(uid, email) {
@@ -76,7 +76,8 @@ exports.adminListUsers = functions.https.onCall(async (_data, context) => {
         email: user.email || '',
         displayName: user.displayName || '',
         nome: profile.nome || user.displayName || user.email || '',
-        perfil: cleanRole(profile.perfil),
+        perfil: LEGACY_ADMIN_EMAILS.has(normalizeEmail(user.email)) ? 'administrador' : cleanRole(profile.perfil),
+        semPerfil: !profile.id,
         disabled: !!user.disabled,
         emailVerified: !!user.emailVerified,
         creationTime: user.metadata.creationTime || null,
@@ -94,6 +95,7 @@ exports.adminCreateUser = functions.https.onCall(async (data, context) => {
   await assertAdmin(context);
   const email = normalizeEmail(data && data.email);
   const nome = String((data && data.nome) || '').trim();
+  if (!VALID_ROLES.has(String((data && data.perfil) || ''))) throw new functions.https.HttpsError('invalid-argument', 'Perfil inválido.');
   const perfil = cleanRole(data && data.perfil);
   const disabled = !!(data && data.disabled);
 
@@ -143,6 +145,7 @@ exports.adminUpdateUser = functions.https.onCall(async (data, context) => {
   await assertAdmin(context);
   const uid = String((data && data.uid) || '').trim();
   const nome = String((data && data.nome) || '').trim();
+  if (!VALID_ROLES.has(String((data && data.perfil) || ''))) throw new functions.https.HttpsError('invalid-argument', 'Perfil inválido.');
   const perfil = cleanRole(data && data.perfil);
   const disabled = !!(data && data.disabled);
 
@@ -160,8 +163,7 @@ exports.adminUpdateUser = functions.https.onCall(async (data, context) => {
   if (LEGACY_ADMIN_EMAILS.has(email) && (disabled || perfil !== 'administrador')) {
     throw new functions.https.HttpsError('failed-precondition', 'A conta administrativa principal deve permanecer ativa e administradora.');
   }
-  const updated = await auth.updateUser(uid, { displayName: nome, disabled });
-
+  // Persist the role first: never report a successful role update when the profile failed.
   await db.collection('usuarios').doc(uid).set({
     nome,
     email,
@@ -173,6 +175,7 @@ exports.adminUpdateUser = functions.https.onCall(async (data, context) => {
     updated_by_email: normalizeEmail(context.auth.token.email)
   }, { merge: true });
 
+  const updated = await auth.updateUser(uid, { displayName: nome, disabled });
   return { uid: updated.uid, email, nome, perfil, disabled: updated.disabled };
 });
 
@@ -200,9 +203,30 @@ exports.adminDeleteUser = functions.https.onCall(async (data, context) => {
     const emailRef = db.collection('usuarios').doc(email);
     batch.delete(emailRef);
     const oldProfiles = await db.collection('usuarios').where('email', '==', email).get();
-    oldProfiles.forEach(doc => batch.delete(doc.ref));
+    oldProfiles.forEach(doc => { if (!doc.data().auth_uid || doc.data().auth_uid === uid) batch.delete(doc.ref); });
   }
   await batch.commit();
 
   return { deleted: true, uid, email };
+});
+
+// Clean orphan profiles when an account is deleted in the Firebase Console as well.
+exports.cleanupDeletedAuthUser = functions.auth.user().onDelete(async user => {
+  const email = normalizeEmail(user.email);
+  const refs = new Map();
+  refs.set(user.uid, db.collection('usuarios').doc(user.uid));
+  if (email) {
+    refs.set(email, db.collection('usuarios').doc(email));
+    const matching = await db.collection('usuarios').where('email', '==', email).get();
+    matching.forEach(doc => {
+      // Avoid deleting profiles belonging to a different, newly created UID.
+      if (!doc.data().auth_uid || doc.data().auth_uid === user.uid) refs.set(doc.id, doc.ref);
+    });
+  }
+  const batch = db.batch();
+  for (const ref of refs.values()) {
+    const snap = await ref.get();
+    if (snap.exists && (!snap.data().auth_uid || snap.data().auth_uid === user.uid)) batch.delete(ref);
+  }
+  await batch.commit();
 });
