@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
 </head>
 <body>
 <div aria-live="polite" id="toast-container"></div>
@@ -187,8 +186,8 @@
 <div class="admin-list" id="admin-tipos-list"></div>
 </article>
 <article class="panel">
-<div class="panel-title"><h3>Usuários</h3><button class="btn secondary" id="novo-usuario-btn" type="button">＋ Novo usuário</button></div>
-<p class="muted small">Crie, edite, bloqueie e exclua contas de acesso. A gestão do Firebase Authentication é executada com segurança por Cloud Functions.</p>
+<div class="panel-title"><h3>Usuários</h3><button class="btn secondary" id="novo-usuario-btn" type="button">＋ Vincular usuário</button></div>
+<p class="muted small">Plano Spark: crie ou exclua contas em Firebase Authentication. Aqui você cadastra e gerencia perfis no Firestore usando o UID da conta. Esta lista não confirma se a conta ainda existe no Authentication.</p>
 <div class="notice hidden" id="usuarios-backend-aviso"></div>
 <div class="admin-list" id="admin-usuarios-list"></div>
 </article>
@@ -278,15 +277,16 @@
 <div class="modal-header"><h3 id="usuario-modal-title">Usuário</h3><button class="modal-close icon-btn" type="button">×</button></div>
 <form class="modal-body" id="usuario-form">
 <input id="usuario-id" type="hidden"/>
+<label>UID do Firebase Authentication<input id="usuario-uid" required="" type="text" autocomplete="off"/></label>
 <label>Nome<input id="usuario-nome" required="" type="text"/></label>
 <label>E-mail<input id="usuario-email" required="" type="email"/></label>
 <label>Perfil<select id="usuario-perfil"><option value="editor">Editor</option><option value="leitor">Somente leitura</option><option value="administrador">Administrador</option></select></label>
 <label class="toggle-line"><input checked="" id="usuario-ativo" type="checkbox"/> Conta ativa</label>
-<div class="notice" id="novo-usuario-help"><strong>Novo usuário:</strong> a conta será criada sem senha definida. Após a criação, use “Enviar senha” para que a pessoa receba o e-mail do Firebase e defina a própria senha.</div>
+<div class="notice" id="novo-usuario-help"><strong>Plano Spark:</strong> crie primeiro a conta em Firebase Authentication → Usuários. Copie o UID exato e vincule aqui. Excluir um perfil não exclui a conta no Authentication. Contas criadas apenas no Authentication não aparecem nesta lista até serem vinculadas.</div>
 <div class="modal-footer"><button class="btn secondary modal-cancel" type="button">Cancelar</button><button class="btn primary" type="submit">Salvar usuário</button></div>
 </form>
 </div>
 </div>
-<script src="app.js?v=20261020-usersfix"></script>
+<script src="app.js?v=20261021-spark1"></script>
 </body>
 </html>

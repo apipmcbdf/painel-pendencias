@@ -13,7 +13,6 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
-  const functionsClient = firebase.functions();
 
   const legacyDriveLinks = {
     '0067268-32.2016.4.01.3400': 'https://drive.google.com/drive/folders/1vs4bEyw8QdxZP7HeSHDiWWlUJB-paYsq?usp=drive_link',
@@ -69,8 +68,6 @@
     filteredCases: [],
     types: [],
     users: [],
-    authUsers: [],
-    usersBackendReady: true,
     currentCaseId: null,
     currentCase: null,
     currentProfile: null,
@@ -155,7 +152,7 @@
         if (!snap.empty) profile = { id:snap.docs[0].id, ...snap.docs[0].data() };
       }
     } catch (e) { console.warn('Perfil não carregado:', e); }
-    if (!profile) profile = { nome: legacyNames[normalizeText(user.email)] || user.email, email:user.email, perfil: legacyAdmins.has(normalizeText(user.email)) ? 'administrador' : (legacyNames[normalizeText(user.email)] ? 'editor' : 'leitor') };
+    if (!profile) profile = { nome: legacyNames[normalizeText(user.email)] || user.email, email:user.email, perfil: legacyAdmins.has(normalizeText(user.email)) ? 'administrador' : 'leitor' };
     if (profile.ativo === false) { await auth.signOut(); throw new Error('Conta desativada. Contate o administrador.'); }
     state.currentProfile = profile;
   }
@@ -165,10 +162,9 @@
     try {
       const snap = await db.collection('usuarios').get();
       snap.forEach(doc => users.push({ id:doc.id, ...doc.data() }));
-    } catch (e) { console.warn(e); }
-    Object.entries(legacyNames).forEach(([email,nome]) => {
-      if (!users.some(u => normalizeText(u.email) === normalizeText(email))) users.push({ id:`legacy_${emailKey(email)}`, email, nome, perfil: legacyAdmins.has(email) ? 'administrador' : 'editor', legacy:true });
-    });
+    } catch (e) { console.warn('Não foi possível consultar os perfis:', e); }
+    // Sem Cloud Functions não é possível listar as contas do Authentication.
+    // Não misturar perfis antigos fictícios com contas reais.
     state.users = users.sort((a,b)=>(a.nome||a.email||'').localeCompare(b.nome||b.email||'', 'pt-BR'));
   }
 
@@ -410,37 +406,8 @@
 
   function applyPermissions(){const editable=canEdit();[els.novoCaso,els.editarCaso,els.arquivarCaso,els.salvarStatus,els.editarComentarios,els.addParte,els.enviarAndamento].forEach(el=>{if(el)el.disabled=!editable});els.detStatus.disabled=!editable;els.adminNav.classList.toggle('hidden',!isAdmin());}
 
-  async function callAdminFunction(name, data={}) {
-    try {
-      const callable = functionsClient.httpsCallable(name);
-      const result = await callable(data);
-      state.usersBackendReady = true;
-      return result.data || {};
-    } catch (err) {
-      state.usersBackendReady = false;
-      throw err;
-    }
-  }
-
-  async function loadAuthUsers() {
-    if (!isAdmin()) return;
-    const aviso = $('usuarios-backend-aviso');
-    try {
-      const result = await callAdminFunction('adminListUsers');
-      state.authUsers = Array.isArray(result.users) ? result.users : [];
-      aviso.classList.add('hidden');
-    } catch (err) {
-      state.authUsers = [];
-      aviso.textContent = 'Não foi possível consultar o Firebase Authentication. Implante as Cloud Functions para gerenciar contas. Nenhum perfil antigo será exibido como conta ativa.';
-      aviso.classList.remove('hidden');
-      console.warn('Cloud Functions de usuários indisponíveis:', err);
-    }
-  }
-
-  function mergeAdminUsers() {
-    // Authentication is authoritative. Firestore-only and legacy entries are not accounts.
-    return [...state.authUsers].sort((a,b)=>(a.nome||a.email||'').localeCompare(b.nome||b.email||'', 'pt-BR'));
-  }
+  // Modo Spark: gestão exclusivamente dos perfis armazenados no Firestore.
+  // Contas Authentication devem ser criadas/removidas no Console Firebase.
 
   async function renderAdmin(){
     if(!isAdmin()){toast('Acesso restrito ao administrador.','error');return;}
@@ -455,10 +422,8 @@
 
     const list=$('admin-usuarios-list');
     list.innerHTML='<div class="empty-state">Carregando usuários...</div>';
-    await loadAuthUsers();
     list.innerHTML='';
-    const users=mergeAdminUsers();
-    $('novo-usuario-btn').disabled=!state.usersBackendReady;
+    const users=state.users;
     if(!users.length){list.innerHTML='<div class="empty-state">Nenhum usuário cadastrado.</div>';return;}
 
     users.forEach(u=>{
@@ -466,18 +431,17 @@
       const l=document.createElement('div');
       const title=document.createElement('div');title.className='user-admin-title';
       const s=document.createElement('strong');s.textContent=u.nome||u.displayName||u.email;
-      const badge=document.createElement('span');badge.className=`mini-badge ${u.disabled?'disabled':'active'}`;badge.textContent=u.disabled?'Bloqueado':'Ativo';
+      const badge=document.createElement('span');badge.className=`mini-badge ${u.ativo===false?'disabled':'active'}`;badge.textContent=u.ativo===false?'Acesso suspenso':'Perfil ativo';
       title.append(s,badge);
       const m=document.createElement('div');m.className='meta';
-      const last=u.lastSignInTime?` · Último acesso: ${new Date(u.lastSignInTime).toLocaleString('pt-BR')}`:'';
-      m.textContent=`${u.email||'—'} · ${u.perfil||'leitor'}${u.sourceAuth?'':' · sem conta Auth'}${last}`;
+      m.textContent=`${u.email||'—'} · ${u.perfil||'leitor'} · Perfil Firestore (conta Authentication não verificada)`;
       l.append(title,m);
       const a=document.createElement('div');a.className='admin-actions wrap';
       const edit=document.createElement('button');edit.className='btn secondary';edit.textContent='Editar';edit.addEventListener('click',()=>openUserModal(u));a.append(edit);
-      if(u.sourceAuth){
-        const reset=document.createElement('button');reset.className='btn secondary';reset.textContent='Enviar senha';reset.title='Enviar e-mail para definição/redefinição de senha';reset.addEventListener('click',()=>sendPasswordEmail(u));a.append(reset);
-        const toggle=document.createElement('button');toggle.className=u.disabled?'btn secondary':'btn warning';toggle.textContent=u.disabled?'Ativar':'Bloquear';toggle.addEventListener('click',()=>toggleUserDisabled(u));a.append(toggle);
-        const del=document.createElement('button');del.className='btn danger';del.textContent='Excluir';del.disabled=u.uid===auth.currentUser?.uid;del.title=del.disabled?'Você não pode excluir a própria conta.':'';del.addEventListener('click',()=>deleteUserAccount(u));a.append(del);
+      if(u.id!==auth.currentUser?.uid && u.email?.toLowerCase()!==auth.currentUser?.email?.toLowerCase()){
+        const remove=document.createElement('button');remove.className='btn danger';remove.textContent='Remover perfil';
+        remove.title='Remove somente o perfil do Firestore; a conta no Authentication não será excluída.';
+        remove.addEventListener('click',()=>removeUserProfile(u));a.append(remove);
       }
       r.append(l,a);list.appendChild(r);
     });
@@ -488,53 +452,46 @@
 
   function openUserModal(u=null){
     $('usuario-form').reset();
-    $('usuario-id').value=u?.uid||u?.id||'';
-    $('usuario-nome').value=u?.nome||u?.displayName||'';
+    $('usuario-id').value=u?.id||'';
+    $('usuario-uid').value=u?.id||'';
+    $('usuario-uid').readOnly=!!u;
+    $('usuario-nome').value=u?.nome||'';
     $('usuario-email').value=u?.email||'';
     $('usuario-perfil').value=u?.perfil||'leitor';
-    $('usuario-ativo').checked=u?.disabled!==true;
-    $('usuario-modal-title').textContent=u?'Editar usuário':'Novo usuário';
-    $('novo-usuario-help').classList.toggle('hidden',!!u);
-    $('usuario-email').disabled=!!u;
+    $('usuario-ativo').checked=u?.ativo!==false;
+    $('usuario-modal-title').textContent=u?'Editar perfil':'Vincular conta existente';
+    $('novo-usuario-help').classList.remove('hidden');
     openModal('usuario-modal');
   }
 
   async function saveUser(e){
     e.preventDefault();if(!isAdmin())return;
-    const uid=$('usuario-id').value.trim();
-    const payload={uid:uid||null,nome:$('usuario-nome').value.trim(),email:$('usuario-email').value.trim().toLowerCase(),perfil:$('usuario-perfil').value,disabled:!$('usuario-ativo').checked};
+    const uid=$('usuario-uid').value.trim();
+    const email=$('usuario-email').value.trim().toLowerCase();
+    if(!/^[A-Za-z0-9]{10,128}$/.test(uid)){toast('Informe o UID correto, copiado do Firebase Authentication.','error');return;}
+    if(uid===auth.currentUser?.uid || email===auth.currentUser?.email?.toLowerCase()){
+      toast('Não é permitido alterar o próprio perfil nesta tela.','error');return;
+    }
+    const current=state.users.find(u=>u.id===uid);
+    if(!current && state.users.some(u=>u.email?.toLowerCase()===email && u.id!==uid)){
+      toast('Já existe um perfil com esse e-mail e outro ID. Confira os cadastros antes de continuar.','error');return;
+    }
+    if(!current && !confirm(`Confirma que a conta ${email} existe no Firebase Authentication e que o UID informado está correto?\n\nO painel não consegue verificar isso automaticamente no plano Spark.`))return;
+    const data={nome:$('usuario-nome').value.trim(),email,perfil:$('usuario-perfil').value,ativo:$('usuario-ativo').checked,updated_at:firebase.firestore.FieldValue.serverTimestamp()};
     try{
-      if(uid) {
-        if(!state.authUsers.some(u=>u.uid===uid)) throw new Error('Conta não encontrada no Authentication. Atualize a lista.');
-        await callAdminFunction('adminUpdateUser',payload);
-        toast('Usuário atualizado.');
-      } else {
-        await callAdminFunction('adminCreateUser',payload);
-        toast('Usuário criado. Agora envie o e-mail de senha.');
-      }
-      closeModal('usuario-modal');await loadUsers();populateFilters();await renderAdmin();
-    }catch(err){toast(`Erro ao salvar usuário: ${err.message}`,'error')}
+      await db.collection('usuarios').doc(uid).set(data,{merge:true});
+      closeModal('usuario-modal');toast('Perfil salvo no Firestore.');await loadUsers();populateFilters();await renderAdmin();
+    }catch(err){toast(`Erro ao salvar perfil: ${err.message}`,'error')}
   }
 
-  async function sendPasswordEmail(u){
-    if(!u?.email)return;
-    if(!confirm(`Enviar e-mail de definição/redefinição de senha para ${u.email}?`))return;
-    try{await auth.sendPasswordResetEmail(u.email);toast('E-mail de senha enviado.');}catch(err){toast(`Não foi possível enviar o e-mail: ${err.message}`,'error')}
-  }
-
-  async function toggleUserDisabled(u){
-    if(!u?.uid)return;
-    if(u.uid===auth.currentUser?.uid){toast('Você não pode bloquear a própria conta.','error');return;}
-    const next=!u.disabled;
-    if(!confirm(`${next?'Bloquear':'Ativar'} o acesso de ${u.email}?`))return;
-    try{await callAdminFunction('adminUpdateUser',{uid:u.uid,nome:u.nome||u.displayName||'',email:u.email,perfil:u.perfil||'leitor',disabled:next});toast(next?'Usuário bloqueado.':'Usuário ativado.');await loadUsers();await renderAdmin();}catch(err){toast(err.message,'error')}
-  }
-
-  async function deleteUserAccount(u){
-    if(!u?.uid)return;
-    if(u.uid===auth.currentUser?.uid){toast('Você não pode excluir a própria conta.','error');return;}
-    if(!confirm(`Excluir definitivamente a conta ${u.email}?\n\nIsso removerá o login e o perfil do usuário. Os registros históricos feitos por ele serão preservados.`))return;
-    try{await callAdminFunction('adminDeleteUser',{uid:u.uid});toast('Usuário excluído.');await loadUsers();populateFilters();await renderAdmin();}catch(err){toast(`Erro ao excluir: ${err.message}`,'error')}
+  async function removeUserProfile(u){
+    if(!isAdmin() || !u?.id)return;
+    if(u.id===auth.currentUser?.uid || u.email?.toLowerCase()===auth.currentUser?.email?.toLowerCase()){
+      toast('Você não pode remover o próprio perfil.','error');return;
+    }
+    if(!confirm(`Remover somente o perfil de ${u.email || u.nome} do Firestore?\n\nIsso NÃO exclui a conta do Firebase Authentication. Confirme primeiro que a conta foi excluída lá, ou que deseja retirar o acesso.`))return;
+    try{await db.collection('usuarios').doc(u.id).delete();toast('Perfil removido do Firestore.');await loadUsers();populateFilters();await renderAdmin();}
+    catch(err){toast(`Erro ao remover perfil: ${err.message}`,'error')}
   }
 
 

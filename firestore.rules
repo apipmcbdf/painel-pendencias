@@ -9,18 +9,6 @@ service cloud.firestore {
       return signedIn() && request.auth.token.email == 'cavictor.franco@gmail.com';
     }
 
-    function legacyEditor() {
-      return signedIn() && request.auth.token.email in [
-        'advogada1@teste.com',
-        'yasmim.ribeiro@apipmcbdf.com.br',
-        'marcelledias.adv@gmail.com',
-        'grazielasuelimenini2@gmail.com',
-        'cavictor.franco@gmail.com',
-        'patricia.franco@apipmcbdf.com.br',
-        'savina.laila@apipmcbdf.com.br',
-        'lorena@apipmcbdf.com.br'
-      ];
-    }
 
     function hasUidProfile() {
       return signedIn() && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
@@ -39,7 +27,7 @@ service cloud.firestore {
     }
 
     function hasAccess() {
-      return signedIn() && ((!hasUidProfile() && !hasEmailProfile() && legacyEditor())
+      return signedIn() && ((!hasUidProfile() && !hasEmailProfile() && legacyAdmin())
         || (hasUidProfile() && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.ativo != false)
         || (!hasUidProfile() && hasEmailProfile() && get(/databases/$(database)/documents/usuarios/$(request.auth.token.email)).data.ativo != false));
     }
@@ -51,7 +39,7 @@ service cloud.firestore {
     }
 
     function canEdit() {
-      return (!hasUidProfile() && !hasEmailProfile() && legacyEditor())
+      return (!hasUidProfile() && !hasEmailProfile() && legacyAdmin())
         || (hasUidProfile() && hasAccess() && uidRole() in ['administrador', 'editor'])
         || (!hasUidProfile() && hasEmailProfile() && hasAccess() && emailRole() in ['administrador', 'editor']);
     }
@@ -82,9 +70,18 @@ service cloud.firestore {
 
     match /usuarios/{docId} {
       allow read: if hasAccess();
-      allow create, update: if isAdmin();
-      // Exclusão de conta/perfil é feita somente pela Cloud Function administrativa.
-      allow delete: if false;
+      // O administrador gerencia perfis, mas não pode alterar o próprio
+      // documento ou criar permissões fora dos três papéis autorizados.
+      allow create, update: if isAdmin()
+        && docId != request.auth.uid
+        && docId != request.auth.token.email
+        && request.resource.data.perfil in ['leitor', 'editor', 'administrador']
+        && request.resource.data.ativo is bool
+        && request.resource.data.email is string;
+      allow delete: if isAdmin()
+        && docId != request.auth.uid
+        && docId != request.auth.token.email
+        && resource.data.email != request.auth.token.email;
     }
   }
 }
